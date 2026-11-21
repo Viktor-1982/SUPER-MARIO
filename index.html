@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SUPER MARIO BROS. — Full Edition</title>
+  <link rel="stylesheet" href="styles.css?v=3" />
+</head>
+<body>
+  <div class="cabinet">
+    <header class="top-bar">
+      <div class="brand">
+        <span class="dot red"></span>
+        <span class="dot yellow"></span>
+        <span class="dot green"></span>
+        <h1>SUPER MARIO BROS.</h1>
+      </div>
+      <div class="toolbar">
+        <button id="btn-gamepad" aria-pressed="false" class="tool-btn" title="Джойстик / Геймпад (настройка)">🎮</button>
+        <button id="btn-mute" aria-pressed="false" class="tool-btn" title="Звук (M)">🔊</button>
+        <button id="btn-aspect" aria-pressed="false" class="tool-btn" title="Пропорции 16:9 / 4:3 (V)">↔ 16:9</button>
+        <button id="btn-crt" aria-pressed="false" class="tool-btn" title="CRT-эффект (C)">📺</button>
+        <button id="btn-pause" aria-pressed="false" class="tool-btn" title="Пауза (P)">⏸</button>
+        <button id="btn-restart" class="tool-btn" title="Перезапуск уровня (R)">↻</button>
+        <button id="btn-fullscreen" aria-pressed="false" class="tool-btn" title="Полный экран монитора (F)">⛶</button>
+      </div>
+    </header>
+
+    <div id="toolbar-feedback" class="toolbar-feedback" role="status"></div>
+    <div id="gamepad-modal" class="gamepad-modal" hidden role="dialog" aria-label="Настройка джойстика">
+      <div class="gp-card">
+        <div class="gp-header">
+          <span>🎮 НАСТРОЙКА ДЖОЙСТИКА</span>
+          <button type="button" id="gp-close" class="tool-btn" title="Закрыть">✕</button>
+        </div>
+        <div id="gp-status" class="gp-status">Нажмите любую кнопку на джойстике...</div>
+        <div class="gp-rows">
+          <div class="gp-row"><span>Прыжок (A)</span><button type="button" class="gp-bind" data-gp-bind="jump">B0 / B3</button></div>
+          <div class="gp-row"><span>Бег / Огонь (B)</span><button type="button" class="gp-bind" data-gp-bind="run">B1 / B2</button></div>
+          <div class="gp-row"><span>Старт / Пауза</span><button type="button" class="gp-bind" data-gp-bind="start">B9</button></div>
+          <div class="gp-row"><span>Выбор мира / Рестарт</span><button type="button" class="gp-bind" data-gp-bind="select">B8</button></div>
+        </div>
+        <label class="gp-check">
+          <input type="checkbox" id="gp-up-jump" />
+          <span>Стик / крестовина Вверх (↑) = Прыжок</span>
+        </label>
+        <div id="gp-live" class="gp-live">Нажато: —</div>
+        <div class="gp-actions">
+          <button type="button" id="gp-reset" class="tool-btn">Сбросить</button>
+          <button type="button" id="gp-done" class="tool-btn active">Готово</button>
+        </div>
+      </div>
+    </div>
+    <main class="screen-frame">
+      <div class="screen-bezel" id="screen-bezel">
+        <canvas id="game-canvas" width="256" height="240" aria-label="Экран игры">Браузер не поддерживает Canvas.</canvas>
+        <div class="crt-overlay" id="crt-overlay"></div>
+      </div>
+    </main>
+
+    <div class="touch-controls" role="group" aria-label="Экранное управление">
+      <div class="touch-group">
+        <button type="button" data-control="left" aria-label="Влево">←</button>
+        <button type="button" data-control="down" aria-label="Вниз или в трубу">↓</button>
+        <button type="button" data-control="right" aria-label="Вправо">→</button>
+      </div>
+      <div class="touch-group">
+        <button type="button" data-control="run" aria-label="Спринт или огонь">Бег</button>
+        <button type="button" data-control="jump" aria-label="Прыжок или начало игры">Прыжок</button>
+      </div>
+    </div>
+    <footer class="controls-bar">
+      <div class="control-group">
+        <kbd>←</kbd><kbd>→</kbd> или <kbd>A</kbd><kbd>D</kbd> <span>Бег</span>
+      </div>
+      <div class="control-group">
+        <kbd>↑</kbd> / <kbd>W</kbd> / <kbd>Space</kbd> / <kbd>Z</kbd> <span>Прыжок</span>
+      </div>
+      <div class="control-group">
+        <kbd>↓</kbd> / <kbd>S</kbd> <span>Присесть / В трубу</span>
+      </div>
+      <div class="control-group">
+        <kbd>Shift</kbd> / <kbd>X</kbd> / <kbd>J</kbd> <span>Спринт / Огонь</span>
+      </div>
+      <div class="control-group">
+        <kbd>P</kbd> <span>Пауза</span>
+      </div>
+      <div class="control-group">
+        <kbd>R</kbd> <span>Рестарт уровня</span>
+      </div>
+    </footer>
+  </div>
+
+  <script src="src/assets.js?v=3"></script>
+  <script src="src/audio.js?v=3"></script>
+  <script src="src/sprites.js?v=3"></script>
+  <script src="src/tmk_levels.js?v=3"></script>
+  <script src="src/levels.js?v=3"></script>
+  <script src="src/entities.js?v=3"></script>
+  <script src="src/engine.js?v=3"></script>
+  <script src="src/main.js?v=3"></script>
+</body>
+</html>

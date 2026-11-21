@@ -1,0 +1,812 @@
+﻿{
+    "mario_small_idle":  {
+                             "w":  12,
+                             "file":  "mario_small_idle.png",
+                             "h":  14
+                         },
+    "mario_small_jump":  {
+                             "w":  16,
+                             "file":  "mario_small_jump.png",
+                             "h":  16
+                         },
+    "mario_small_dead":  {
+                             "w":  14,
+                             "file":  "mario_small_dead.png",
+                             "h":  14
+                         },
+    "mario_small_walk_f0":  {
+                                "w":  16,
+                                "file":  "mario_small_walk_f0.png",
+                                "h":  32
+                            },
+    "mario_small_walk_f1":  {
+                                "w":  16,
+                                "file":  "mario_small_walk_f1.png",
+                                "h":  32
+                            },
+    "mario_small_walk_f2":  {
+                                "w":  16,
+                                "file":  "mario_small_walk_f2.png",
+                                "h":  32
+                            },
+    "mario_big_idle":  {
+                           "w":  16,
+                           "file":  "mario_big_idle.png",
+                           "h":  25
+                       },
+    "mario_big_jump":  {
+                           "w":  16,
+                           "file":  "mario_big_jump.png",
+                           "h":  32
+                       },
+    "mario_big_crouch":  {
+                             "w":  16,
+                             "file":  "mario_big_crouch.png",
+                             "h":  22
+                         },
+    "mario_big_walk":  {
+                           "w":  16,
+                           "file":  "mario_big_walk.png",
+                           "h":  30
+                       },
+    "mario_fire_idle":  {
+                            "w":  16,
+                            "file":  "mario_fire_idle.png",
+                            "h":  25
+                        },
+    "mario_fire_jump":  {
+                            "w":  16,
+                            "file":  "mario_fire_jump.png",
+                            "h":  32
+                        },
+    "mario_fire_crouch":  {
+                              "w":  16,
+                              "file":  "mario_fire_crouch.png",
+                              "h":  22
+                          },
+    "mario_fire_shoot":  {
+                             "w":  16,
+                             "file":  "mario_fire_shoot.png",
+                             "h":  31
+                         },
+    "mario_fire_walk_f0":  {
+                               "w":  16,
+                               "file":  "mario_fire_walk_f0.png",
+                               "h":  32
+                           },
+    "mario_fire_walk_f1":  {
+                               "w":  16,
+                               "file":  "mario_fire_walk_f1.png",
+                               "h":  32
+                           },
+    "mario_fire_walk_f2":  {
+                               "w":  16,
+                               "file":  "mario_fire_walk_f2.png",
+                               "h":  32
+                           },
+    "goomba_idle":  {
+                        "w":  16,
+                        "file":  "goomba_idle.png",
+                        "h":  16
+                    },
+    "goomba_walk_f0":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f0.png",
+                           "h":  16
+                       },
+    "goomba_walk_f1":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f1.png",
+                           "h":  16
+                       },
+    "goomba_walk_f2":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f2.png",
+                           "h":  16
+                       },
+    "goomba_walk_f3":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f3.png",
+                           "h":  16
+                       },
+    "goomba_walk_f4":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f4.png",
+                           "h":  16
+                       },
+    "goomba_walk_f5":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f5.png",
+                           "h":  16
+                       },
+    "goomba_walk_f6":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f6.png",
+                           "h":  16
+                       },
+    "goomba_walk_f7":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f7.png",
+                           "h":  16
+                       },
+    "goomba_walk_f8":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f8.png",
+                           "h":  16
+                       },
+    "goomba_walk_f9":  {
+                           "w":  150,
+                           "file":  "goomba_walk_f9.png",
+                           "h":  16
+                       },
+    "goomba_walk_f10":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f10.png",
+                            "h":  16
+                        },
+    "goomba_walk_f11":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f11.png",
+                            "h":  16
+                        },
+    "goomba_walk_f12":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f12.png",
+                            "h":  16
+                        },
+    "goomba_walk_f13":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f13.png",
+                            "h":  16
+                        },
+    "goomba_walk_f14":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f14.png",
+                            "h":  16
+                        },
+    "goomba_walk_f15":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f15.png",
+                            "h":  16
+                        },
+    "goomba_walk_f16":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f16.png",
+                            "h":  16
+                        },
+    "goomba_walk_f17":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f17.png",
+                            "h":  16
+                        },
+    "goomba_walk_f18":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f18.png",
+                            "h":  16
+                        },
+    "goomba_walk_f19":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f19.png",
+                            "h":  16
+                        },
+    "goomba_walk_f20":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f20.png",
+                            "h":  16
+                        },
+    "goomba_walk_f21":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f21.png",
+                            "h":  16
+                        },
+    "goomba_walk_f22":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f22.png",
+                            "h":  16
+                        },
+    "goomba_walk_f23":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f23.png",
+                            "h":  16
+                        },
+    "goomba_walk_f24":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f24.png",
+                            "h":  16
+                        },
+    "goomba_walk_f25":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f25.png",
+                            "h":  16
+                        },
+    "goomba_walk_f26":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f26.png",
+                            "h":  16
+                        },
+    "goomba_walk_f27":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f27.png",
+                            "h":  16
+                        },
+    "goomba_walk_f28":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f28.png",
+                            "h":  16
+                        },
+    "goomba_walk_f29":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f29.png",
+                            "h":  16
+                        },
+    "goomba_walk_f30":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f30.png",
+                            "h":  16
+                        },
+    "goomba_walk_f31":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f31.png",
+                            "h":  16
+                        },
+    "goomba_walk_f32":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f32.png",
+                            "h":  16
+                        },
+    "goomba_walk_f33":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f33.png",
+                            "h":  16
+                        },
+    "goomba_walk_f34":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f34.png",
+                            "h":  16
+                        },
+    "goomba_walk_f35":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f35.png",
+                            "h":  16
+                        },
+    "goomba_walk_f36":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f36.png",
+                            "h":  16
+                        },
+    "goomba_walk_f37":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f37.png",
+                            "h":  16
+                        },
+    "goomba_walk_f38":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f38.png",
+                            "h":  16
+                        },
+    "goomba_walk_f39":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f39.png",
+                            "h":  16
+                        },
+    "goomba_walk_f40":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f40.png",
+                            "h":  16
+                        },
+    "goomba_walk_f41":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f41.png",
+                            "h":  16
+                        },
+    "goomba_walk_f42":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f42.png",
+                            "h":  16
+                        },
+    "goomba_walk_f43":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f43.png",
+                            "h":  16
+                        },
+    "goomba_walk_f44":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f44.png",
+                            "h":  16
+                        },
+    "goomba_walk_f45":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f45.png",
+                            "h":  16
+                        },
+    "goomba_walk_f46":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f46.png",
+                            "h":  16
+                        },
+    "goomba_walk_f47":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f47.png",
+                            "h":  16
+                        },
+    "goomba_walk_f48":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f48.png",
+                            "h":  16
+                        },
+    "goomba_walk_f49":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f49.png",
+                            "h":  16
+                        },
+    "goomba_walk_f50":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f50.png",
+                            "h":  16
+                        },
+    "goomba_walk_f51":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f51.png",
+                            "h":  16
+                        },
+    "goomba_walk_f52":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f52.png",
+                            "h":  16
+                        },
+    "goomba_walk_f53":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f53.png",
+                            "h":  16
+                        },
+    "goomba_walk_f54":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f54.png",
+                            "h":  16
+                        },
+    "goomba_walk_f55":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f55.png",
+                            "h":  16
+                        },
+    "goomba_walk_f56":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f56.png",
+                            "h":  16
+                        },
+    "goomba_walk_f57":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f57.png",
+                            "h":  16
+                        },
+    "goomba_walk_f58":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f58.png",
+                            "h":  16
+                        },
+    "goomba_walk_f59":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f59.png",
+                            "h":  16
+                        },
+    "goomba_walk_f60":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f60.png",
+                            "h":  16
+                        },
+    "goomba_walk_f61":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f61.png",
+                            "h":  16
+                        },
+    "goomba_walk_f62":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f62.png",
+                            "h":  16
+                        },
+    "goomba_walk_f63":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f63.png",
+                            "h":  16
+                        },
+    "goomba_walk_f64":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f64.png",
+                            "h":  16
+                        },
+    "goomba_walk_f65":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f65.png",
+                            "h":  16
+                        },
+    "goomba_walk_f66":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f66.png",
+                            "h":  16
+                        },
+    "goomba_walk_f67":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f67.png",
+                            "h":  16
+                        },
+    "goomba_walk_f68":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f68.png",
+                            "h":  16
+                        },
+    "goomba_walk_f69":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f69.png",
+                            "h":  16
+                        },
+    "goomba_walk_f70":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f70.png",
+                            "h":  16
+                        },
+    "goomba_walk_f71":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f71.png",
+                            "h":  16
+                        },
+    "goomba_walk_f72":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f72.png",
+                            "h":  16
+                        },
+    "goomba_walk_f73":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f73.png",
+                            "h":  16
+                        },
+    "goomba_walk_f74":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f74.png",
+                            "h":  16
+                        },
+    "goomba_walk_f75":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f75.png",
+                            "h":  16
+                        },
+    "goomba_walk_f76":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f76.png",
+                            "h":  16
+                        },
+    "goomba_walk_f77":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f77.png",
+                            "h":  16
+                        },
+    "goomba_walk_f78":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f78.png",
+                            "h":  16
+                        },
+    "goomba_walk_f79":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f79.png",
+                            "h":  16
+                        },
+    "goomba_walk_f80":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f80.png",
+                            "h":  16
+                        },
+    "goomba_walk_f81":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f81.png",
+                            "h":  16
+                        },
+    "goomba_walk_f82":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f82.png",
+                            "h":  16
+                        },
+    "goomba_walk_f83":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f83.png",
+                            "h":  16
+                        },
+    "goomba_walk_f84":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f84.png",
+                            "h":  16
+                        },
+    "goomba_walk_f85":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f85.png",
+                            "h":  16
+                        },
+    "goomba_walk_f86":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f86.png",
+                            "h":  16
+                        },
+    "goomba_walk_f87":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f87.png",
+                            "h":  16
+                        },
+    "goomba_walk_f88":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f88.png",
+                            "h":  16
+                        },
+    "goomba_walk_f89":  {
+                            "w":  150,
+                            "file":  "goomba_walk_f89.png",
+                            "h":  16
+                        },
+    "goomba_dead":  {
+                        "w":  16,
+                        "file":  "goomba_dead.png",
+                        "h":  8
+                    },
+    "koopa_green":  {
+                        "w":  16,
+                        "file":  "koopa_green.png",
+                        "h":  23
+                    },
+    "koopa_green_walk_f0":  {
+                                "w":  16,
+                                "file":  "koopa_green_walk_f0.png",
+                                "h":  24
+                            },
+    "koopa_green_walk_f1":  {
+                                "w":  16,
+                                "file":  "koopa_green_walk_f1.png",
+                                "h":  24
+                            },
+    "koopa_green_shell":  {
+                              "w":  16,
+                              "file":  "koopa_green_shell.png",
+                              "h":  14
+                          },
+    "koopa_red":  {
+                      "w":  16,
+                      "file":  "koopa_red.png",
+                      "h":  23
+                  },
+    "koopa_red_walk_f0":  {
+                              "w":  16,
+                              "file":  "koopa_red_walk_f0.png",
+                              "h":  24
+                          },
+    "koopa_red_walk_f1":  {
+                              "w":  16,
+                              "file":  "koopa_red_walk_f1.png",
+                              "h":  24
+                          },
+    "koopa_red_shell":  {
+                            "w":  16,
+                            "file":  "koopa_red_shell.png",
+                            "h":  14
+                        },
+    "paratroopa_green":  {
+                             "w":  16,
+                             "file":  "paratroopa_green.png",
+                             "h":  23
+                         },
+    "paratroopa_red":  {
+                           "w":  16,
+                           "file":  "paratroopa_red.png",
+                           "h":  23
+                       },
+    "buzzy":  {
+                  "w":  16,
+                  "file":  "buzzy.png",
+                  "h":  15
+              },
+    "buzzy_shell":  {
+                        "w":  16,
+                        "file":  "buzzy_shell.png",
+                        "h":  15
+                    },
+    "piranha":  {
+                    "w":  16,
+                    "file":  "piranha.png",
+                    "h":  23
+                },
+    "piranha_anim_f0":  {
+                            "w":  18,
+                            "file":  "piranha_anim_f0.png",
+                            "h":  24
+                        },
+    "piranha_anim_f1":  {
+                            "w":  18,
+                            "file":  "piranha_anim_f1.png",
+                            "h":  24
+                        },
+    "piranha_anim_f2":  {
+                            "w":  18,
+                            "file":  "piranha_anim_f2.png",
+                            "h":  24
+                        },
+    "piranha_ug":  {
+                       "w":  16,
+                       "file":  "piranha_ug.png",
+                       "h":  23
+                   },
+    "hammer_bro":  {
+                       "w":  16,
+                       "file":  "hammer_bro.png",
+                       "h":  24
+                   },
+    "lakitu":  {
+                   "w":  16,
+                   "file":  "lakitu.png",
+                   "h":  24
+               },
+    "spiny":  {
+                  "w":  16,
+                  "file":  "spiny.png",
+                  "h":  15
+              },
+    "spiny_egg":  {
+                      "w":  14,
+                      "file":  "spiny_egg.png",
+                      "h":  16
+                  },
+    "bullet_bill":  {
+                        "w":  16,
+                        "file":  "bullet_bill.png",
+                        "h":  14
+                    },
+    "blooper":  {
+                    "w":  16,
+                    "file":  "blooper.png",
+                    "h":  24
+                },
+    "cheep_red":  {
+                      "w":  16,
+                      "file":  "cheep_red.png",
+                      "h":  16
+                  },
+    "cheep_gray":  {
+                       "w":  16,
+                       "file":  "cheep_gray.png",
+                       "h":  16
+                   },
+    "podoboo":  {
+                    "w":  14,
+                    "file":  "podoboo.png",
+                    "h":  16
+                },
+    "bowser":  {
+                   "w":  32,
+                   "file":  "bowser.png",
+                   "h":  32
+               },
+    "bowser_walk_f0":  {
+                           "w":  32,
+                           "file":  "bowser_walk_f0.png",
+                           "h":  32
+                       },
+    "bowser_walk_f1":  {
+                           "w":  32,
+                           "file":  "bowser_walk_f1.png",
+                           "h":  32
+                       },
+    "bowser_flame":  {
+                         "w":  24,
+                         "file":  "bowser_flame.png",
+                         "h":  8
+                     },
+    "toad":  {
+                 "w":  16,
+                 "file":  "toad.png",
+                 "h":  24
+             },
+    "peach":  {
+                  "w":  16,
+                  "file":  "peach.png",
+                  "h":  24
+              },
+    "mushroom":  {
+                     "w":  16,
+                     "file":  "mushroom.png",
+                     "h":  16
+                 },
+    "oneup":  {
+                  "w":  16,
+                  "file":  "oneup.png",
+                  "h":  16
+              },
+    "fire_flower":  {
+                        "w":  16,
+                        "file":  "fire_flower.png",
+                        "h":  16
+                    },
+    "starman":  {
+                    "w":  16,
+                    "file":  "starman.png",
+                    "h":  16
+                },
+    "coin":  {
+                 "w":  10,
+                 "file":  "coin.png",
+                 "h":  14
+             },
+    "logo":  {
+                 "w":  176,
+                 "file":  "logo.png",
+                 "h":  88
+             },
+    "ground_overworld":  {
+                             "w":  16,
+                             "file":  "ground_overworld.png",
+                             "h":  16
+                         },
+    "ground_underground":  {
+                               "w":  16,
+                               "file":  "ground_underground.png",
+                               "h":  16
+                           },
+    "ground_underwater":  {
+                              "w":  16,
+                              "file":  "ground_underwater.png",
+                              "h":  16
+                          },
+    "ground_castle":  {
+                          "w":  16,
+                          "file":  "ground_castle.png",
+                          "h":  16
+                      },
+    "brick_overworld":  {
+                            "w":  16,
+                            "file":  "brick_overworld.png",
+                            "h":  16
+                        },
+    "brick_underground":  {
+                              "w":  16,
+                              "file":  "brick_underground.png",
+                              "h":  16
+                          },
+    "brick_castle":  {
+                         "w":  16,
+                         "file":  "brick_castle.png",
+                         "h":  16
+                     },
+    "qblock_overworld":  {
+                             "w":  16,
+                             "file":  "qblock_overworld.png",
+                             "h":  16
+                         },
+    "qblock_underground":  {
+                               "w":  16,
+                               "file":  "qblock_underground.png",
+                               "h":  16
+                           },
+    "qblock_castle":  {
+                          "w":  16,
+                          "file":  "qblock_castle.png",
+                          "h":  16
+                      },
+    "empty_block":  {
+                        "w":  16,
+                        "file":  "empty_block.png",
+                        "h":  16
+                    },
+    "hard_overworld":  {
+                           "w":  16,
+                           "file":  "hard_overworld.png",
+                           "h":  16
+                       },
+    "hard_underground":  {
+                             "w":  16,
+                             "file":  "hard_underground.png",
+                             "h":  16
+                         },
+    "axe":  {
+                "w":  16,
+                "file":  "axe.png",
+                "h":  16
+            },
+    "castle":  {
+                   "w":  144,
+                   "file":  "castle.png",
+                   "h":  176
+               }
+}
