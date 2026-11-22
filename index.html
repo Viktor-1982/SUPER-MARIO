@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SUPER MARIO BROS. — Full Edition</title>
-  <link rel="stylesheet" href="styles.css?v=5" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
   <div class="cabinet">
@@ -35,12 +35,18 @@
         </div>
         <div id="gp-status" class="gp-status">Нажмите любую кнопку на джойстике...</div>
         <div class="gp-presets">
-          <button type="button" id="gp-preset-mario" class="tool-btn">PS / Xbox (✕/△ Прыжок, □/○ Бег)</button>
-          <button type="button" id="gp-preset-nes" class="tool-btn">NES / Dendy (○/△ Прыжок, ✕/□ Бег)</button>
+          <button type="button" id="gp-preset-mario" class="tool-btn">Классика Mario (□/△ Бег, ✕/○ Прыж.)</button>
+          <button type="button" id="gp-preset-nes" class="tool-btn">Dendy / NES (✕/□ Бег, ○ Прыж.)</button>
+        </div>
+        <div class="gp-diamond" aria-label="Схема правых кнопок джойстика">
+          <div class="gp-face gp-top" data-gp-face="3"><b>△</b><small>Бег</small></div>
+          <div class="gp-face gp-left" data-gp-face="2"><b>□</b><small>Бег</small></div>
+          <div class="gp-face gp-right" data-gp-face="1"><b>○</b><small>Прыж</small></div>
+          <div class="gp-face gp-bot" data-gp-face="0"><b>✕</b><small>Прыж</small></div>
         </div>
         <div class="gp-rows">
-          <div class="gp-row"><span>Прыжок (A)</span><button type="button" class="gp-bind" data-gp-bind="jump">✕ / △</button></div>
-          <div class="gp-row"><span>Бег / Огонь (B)</span><button type="button" class="gp-bind" data-gp-bind="run">○ / □ / R1</button></div>
+          <div class="gp-row"><span>Прыжок (A)</span><button type="button" class="gp-bind" data-gp-bind="jump">✕ / ○</button></div>
+          <div class="gp-row"><span>Бег / Огонь (B)</span><button type="button" class="gp-bind" data-gp-bind="run">□ / △ / R1</button></div>
           <div class="gp-row"><span>Старт / Пауза</span><button type="button" class="gp-bind" data-gp-bind="start">Options</button></div>
           <div class="gp-row"><span>Выбор мира / Рестарт</span><button type="button" class="gp-bind" data-gp-bind="select">Share</button></div>
         </div>
@@ -96,12 +102,12 @@
   </div>
 
   <script src="src/assets.js?v=15"></script>
-  <script src="src/audio.js?v=8"></script>
-  <script src="src/sprites.js?v=15"></script>
-  <script src="src/tmk_levels.js?v=16"></script>
+  <script src="src/audio.js?v=21"></script>
+  <script src="src/sprites.js?v=27"></script>
+  <script src="src/tmk_levels.js?v=27"></script>
   <script src="src/levels.js?v=16"></script>
-  <script src="src/entities.js?v=17"></script>
-  <script src="src/engine.js?v=19"></script>
-  <script src="src/main.js?v=15"></script>
+  <script src="src/entities.js?v=27"></script>
+  <script src="src/engine.js?v=27"></script>
+  <script src="src/main.js?v=20"></script>
 </body>
 </html>

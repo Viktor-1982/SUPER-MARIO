@@ -119,8 +119,9 @@
       this.beginLevelIntro(global.MarioLevels.LEVEL_ORDER[this.currentLevelIdx], 'small');
     }
 
-    beginLevelIntro(levelId, powerState, respawnAt = null) {
+    beginLevelIntro(levelId, powerState, respawnAt = null, skipPipeIntro = false) {
       this.respawnAt = respawnAt;
+      this.skipPipeIntro = !!skipPipeIntro || !!respawnAt;
       this.savedMainState = null;
       this.flagAnim = null;
       this.bridgeAnim = null;
@@ -128,6 +129,7 @@
       this.pipeAnim = null;
       this.barrageTimer = 0;
       this.cheepTimer = 55;
+      this.lakituRespawnTimer = 0;
       this.toadMessageTimer = 0;
       global.MarioAudio.setPaused(false);
       global.MarioAudio.stopMusic();
@@ -159,6 +161,7 @@
       this.pipeAnim = null;
       this.barrageTimer = 0;
       this.cheepTimer = 55;
+      this.lakituRespawnTimer = 0;
       this.toadMessageTimer = 0;
       this.input.jumpPressed = false;
       this.input.firePressed = false;
@@ -181,8 +184,8 @@
       if (isTitleBackdrop) {
         this.player.onGround = true;
       } else if (!lv.isBonus && !lv.isCloud) {
-        // 3 seconds (180 frames) of spawn/respawn protection on main stages (skip coin bonus rooms!)
-        this.player.invulnTimer = 180;
+        // 2 seconds (120 frames) of spawn/respawn protection on main stages (skip coin bonus rooms!)
+        this.player.invulnTimer = 120;
       }
       if (respawn) {
         this.player.onGround = true;
@@ -196,6 +199,16 @@
       this.springs = [];
       this.powerUps = [];
       this.vines = [];
+      if (lv.isCloud) {
+        // Authentic 1985 NES entrance beanstalk rising out of the col 4 shaft in all Cloud Heavens (2-1, 3-1, 4-2, 5-2, 6-2)!
+        this.vines.push({
+          x: 4 * TILE + 8,
+          baseY: 15 * TILE,
+          topY: 9 * TILE,
+          targetTopY: 9 * TILE,
+          targetLevel: null
+        });
+      }
       this.fireballs = [];
       this.hammers = [];
       this.particles = [];
@@ -575,7 +588,7 @@
       } else if (this.state === 'intro') {
         this.introTimer--;
         if (this.introTimer <= 0) {
-          const isPipeStart = !this.respawnAt && (this.pendingLevelId === '1-2' || this.pendingLevelId === '2-2' || this.pendingLevelId === '4-2' || this.pendingLevelId === '7-2');
+          const isPipeStart = !this.skipPipeIntro && !this.respawnAt && (this.pendingLevelId === '1-2' || this.pendingLevelId === '2-2' || this.pendingLevelId === '4-2' || this.pendingLevelId === '7-2');
           if (isPipeStart) {
             this.startOutdoorPipeIntro(this.pendingLevelId, this.pendingPowerState);
           } else {
@@ -632,7 +645,7 @@
             global.MarioAudio.playSfx('gameOver');
           } else {
             const id = global.MarioLevels.LEVEL_ORDER[this.currentLevelIdx];
-            this.beginLevelIntro(id, 'small', this.respawnAt);
+            this.beginLevelIntro(id, 'small', this.respawnAt, true);
           }
         }
         return;
@@ -667,14 +680,33 @@
       for (const plat of this.platforms) plat.update(p.ridingPlatform === plat, this);
       for (const sp of this.springs) sp.update();
 
-      // Authentic NES Bullet Bill random barrage (Worlds 5-3 & 6-3)
-      if (this.level.bulletBarrage && this.level.flagpoleCol && p.x < (this.level.flagpoleCol - 14) * TILE && p.x > 16 * TILE) {
-        this.barrageTimer = (this.barrageTimer || 140) - 1;
+      // Authentic 1985 NES Lakitu Respawn (Worlds 4-1 & 6-1): if Lakitu is defeated before the safe end zone, a new one flies in ~6s later!
+      if ((this.level.id === '4-1' || this.level.id === '6-1') && this.level.flagpoleCol && p.x > 26 * TILE && p.x < (this.level.flagpoleCol - 28) * TILE) {
+        const hasLakitu = this.enemies.some(e => e.type === 'lakitu' && !e.dead && !e.flipped);
+        if (!hasLakitu) {
+          this.lakituRespawnTimer = (this.lakituRespawnTimer || 360) - 1;
+          if (this.lakituRespawnTimer <= 0) {
+            const lk = new global.MarioEntities.Lakitu(this.cameraX + this.screenW + 12, 36);
+            lk.active = true;
+            this.enemies.push(lk);
+            this.lakituRespawnTimer = 360;
+          }
+        } else {
+          this.lakituRespawnTimer = 360;
+        }
+      }
+      // Authentic 1985 NES Bullet Bill Frenzy (Worlds 5-3 & 6-3): stops before final staircase, max 3 active, quantized 16px lanes
+      if (this.level.bulletBarrage && this.level.flagpoleCol && p.x < (this.level.flagpoleCol - 24) * TILE && p.x > 16 * TILE) {
+        this.barrageTimer = (this.barrageTimer || 145) - 1;
         if (this.barrageTimer <= 0) {
-          this.barrageTimer = 130 + Math.floor(Math.random() * 80);
-          const by = Math.max(48, Math.min(184, p.y - 16 + Math.floor(Math.random() * 48)));
-          this.enemies.push(new global.MarioEntities.BulletBill(this.cameraX + this.screenW + 8, by, -1));
-          global.MarioAudio.playSfx('cannon');
+          this.barrageTimer = 135 + Math.floor(Math.random() * 85);
+          const activeBullets = this.enemies.filter(e => e.type === 'bullet' && !e.dead && !e.flipped).length;
+          if (activeBullets < 3) {
+            const lanes = [48, 64, 80, 96, 112, 128, 144, 160];
+            const by = lanes[Math.floor(Math.random() * lanes.length)];
+            this.enemies.push(new global.MarioEntities.BulletBill(this.cameraX + this.screenW + 8, by, -1));
+            global.MarioAudio.playSfx('cannon');
+          }
         }
       }
 
@@ -763,35 +795,51 @@
 
       const pBox = p.getHitbox();
 
-      // Check Springboards (Authentic NES compression window + forgiving super bounce!)
+      // Check Springboards (Authentic 1985 NES: solid sides, jump onto top -> 10-frame coil squash & spring launch!)
       for (const sp of this.springs) {
         if (sp.launchTimer > 0) {
           if (this.input.jump || this.input.jumpPressed) sp.boostHeld = true;
           sp.launchTimer--;
-          sp.compress = sp.launchTimer > 3 ? 12 : 7;
+          // 10-frame smooth squash down (10->5) then spring rebound up (5->0)
+          sp.compress = sp.launchTimer >= 5
+            ? Math.round((10 - sp.launchTimer) * 2.6)
+            : Math.round(sp.launchTimer * 2.6);
           p.y = (sp.y + sp.compress) - p.h;
           p.vy = 0;
           p.onGround = false;
           if (sp.launchTimer <= 0) {
-            sp.compress = 2;
+            sp.compress = 0;
             const superBounce = sp.boostHeld || this.input.jump;
-            p.vy = superBounce ? -8.8 : -6.2;
-            p.springBoostTimer = superBounce ? 38 : 22;
+            p.vy = superBounce ? -9.2 : -6.0;
+            p.springBoostTimer = superBounce ? 42 : 24;
             p.jumpTier = 0;
             global.MarioAudio.playSfx('spring');
           }
           continue;
         }
         const spTop = sp.y + sp.compress;
-        const spBox = { x: sp.x + 1, y: spTop, w: sp.w - 2, h: sp.baseY - spTop };
-        if (p.vy >= 0 && global.MarioEntities.aabb(pBox, spBox)) {
-          sp.launchTimer = 7;
-          sp.compress = 10;
-          sp.boostHeld = !!(this.input.jump || this.input.jumpPressed);
-          p.y = (sp.y + sp.compress) - p.h;
-          p.vy = 0;
-          p.onGround = false;
-          p.coyoteTimer = 0;
+        const spBox = { x: sp.x, y: spTop, w: sp.w, h: sp.baseY - spTop };
+        if (global.MarioEntities.aabb(pBox, spBox)) {
+          const prevFootY = (pBox.y + pBox.h) - Math.max(0, p.vy);
+          if (p.vy >= 0 && prevFootY <= spTop + 10) {
+            // Landed cleanly on TOP of the springboard!
+            sp.launchTimer = 10;
+            sp.compress = 3;
+            sp.boostHeld = !!(this.input.jump || this.input.jumpPressed);
+            p.y = (sp.y + sp.compress) - p.h;
+            p.vy = 0;
+            p.onGround = false;
+            p.coyoteTimer = 0;
+          } else {
+            // Solid sides like original 1985 NES: bumping the side stops Mario instead of teleporting him!
+            if (pBox.x + pBox.w / 2 < sp.x + sp.w / 2) {
+              p.x = sp.x - p.w;
+              if (p.vx > 0) p.vx = 0;
+            } else {
+              p.x = sp.x + sp.w;
+              if (p.vx < 0) p.vx = 0;
+            }
+          }
         }
       }
 
@@ -878,7 +926,7 @@
         }
       }
 
-      // Bill Blaster Cannons
+      // Bill Blaster Cannons (Authentic 1985 NES: silent when Mario is within 2 tiles / 32px, max 3 bullets active)
       if (this.level.cannons) {
         for (const cn of this.level.cannons) {
           const cx = cn.col * TILE;
@@ -886,8 +934,9 @@
           if (cx > this.cameraX - 16 && cx < this.cameraX + this.screenW + 16) {
             cn.timer--;
             if (cn.timer <= 0) {
-              cn.timer = 135 + Math.floor(Math.random() * 60);
-              if (Math.abs(p.x - cx) > 24) {
+              cn.timer = 130 + Math.floor(Math.random() * 55);
+              const activeBullets = this.enemies.filter(e => e.type === 'bullet' && !e.dead && !e.flipped).length;
+              if (Math.abs((p.x + p.w / 2) - (cx + 8)) >= 32 && activeBullets < 3) {
                 const dir = p.x < cx ? -1 : 1;
                 this.enemies.push(new global.MarioEntities.BulletBill(cx + dir * 10, cy + 1, dir));
                 this.spawnPuff(cx + dir * 12, cy + 4);
@@ -1143,9 +1192,19 @@
       else if (inp.right && !inp.left) { p.vx = Math.min(maxSpeed, p.vx + 0.10); p.facing = 1; }
       else { p.vx *= 0.88; if (Math.abs(p.vx) < 0.05) p.vx = 0; }
 
+      if (p.ridingPlatform && p.ridingPlatform.justWrapped) {
+        p.ridingPlatform = null;
+        p.onGround = false;
+      }
+      if (p.ridingPlatform) {
+        p.x += p.ridingPlatform.dx;
+        p.y += p.ridingPlatform.dy;
+      }
+
       if (inp.jumpPressed) {
         p.vy = -2.35;
         p.onGround = false;
+        p.ridingPlatform = null;
         global.MarioAudio.playSfx('swim');
         this.particles.push(new global.MarioEntities.Particle(p.x + 6, p.y, 0, -0.7, '#a4e4fc', 2, 26, -0.01));
       }
@@ -1236,7 +1295,16 @@
 
       // Authentic 1985 SMB1 has no skid sound (skid screech was only added in SMB2J / Lost Levels)
 
-      if (p.ridingPlatform) { p.x += p.ridingPlatform.dx; p.y += p.ridingPlatform.dy; }
+      // Authentic 1985 NES elevator wrap detach: when an UP elevator wraps past top of screen,
+      // Mario detaches smoothly at the top and falls gently onto the next lift below (NEVER teleports to bottom!).
+      if (p.ridingPlatform && (p.ridingPlatform.justWrapped || (p.ridingPlatform.detached && p.ridingPlatform.y > 248))) {
+        p.ridingPlatform = null;
+        p.onGround = false;
+      }
+      if (p.ridingPlatform) {
+        p.x += p.ridingPlatform.dx;
+        p.y += p.ridingPlatform.dy;
+      }
 
       if (p.onGround) { p.coyoteTimer = 6; p.stompCombo = 0; }
       else if (p.coyoteTimer > 0) p.coyoteTimer--;
@@ -1338,6 +1406,7 @@
         }
       }
 
+      const prevPlat = p.ridingPlatform;
       const prevTop = hb.y;
       const prevBottom = hb.y + hb.h;
       p.y += p.vy;
@@ -1358,11 +1427,28 @@
           }
         }
         if (!p.onGround) {
+          let landedPlat = null;
+          const curBottom = hb2.y + hb2.h;
           for (const plat of this.platforms) {
-            if (hb2.x + hb2.w > plat.x && hb2.x < plat.x + plat.w && prevBottom <= plat.y + 4 && hb2.y + hb2.h >= plat.y) {
-              p.y = plat.y - p.h; p.vy = 0; p.onGround = true; p.ridingPlatform = plat;
-              break;
+            if (plat.justWrapped || plat.y > 248) continue;
+            // 2px horizontal grace matches Mario's 16px visual boots vs 12px hitbox
+            if (hb2.x + hb2.w <= plat.x - 2 || hb2.x >= plat.x + plat.w + 2) continue;
+
+            const platPrevY = (plat.prevY !== undefined) ? plat.prevY : (plat.y - (plat.dy || 0));
+            // Keep Mario solidly glued to a downward/drop/pulley lift while riding it
+            const keepRiding = (plat === prevPlat) && curBottom >= plat.y - 4 && prevBottom <= plat.y + 10;
+            // Swept landing test: reliably catches fast falls (vy=4.0) onto downward/upward lifts across full 8px bar thickness
+            const sweptLand = prevBottom <= Math.max(platPrevY, plat.y) + 9 && curBottom >= plat.y - 1;
+
+            if (keepRiding || sweptLand) {
+              if (!landedPlat || plat.y < landedPlat.y) landedPlat = plat;
             }
+          }
+          if (landedPlat) {
+            p.y = landedPlat.y - p.h;
+            p.vy = 0;
+            p.onGround = true;
+            p.ridingPlatform = landedPlat;
           }
         }
       } else {
@@ -1988,6 +2074,19 @@
       // Moving Platforms
       for (const plat of this.platforms) {
         if (plat.y > 248) continue;
+        if (plat.cloudRide) {
+          // Fluffy white NES Cloud Lift in Cloud Heavens!
+          const px = Math.round(plat.x), py = Math.round(plat.y);
+          ctx.fillStyle = '#000000';
+          ctx.fillRect(px, py + 1, plat.w, plat.h - 1);
+          ctx.fillStyle = '#fcfcfc';
+          for (let cx = px + 6; cx <= px + plat.w - 6; cx += 10) {
+            ctx.beginPath(); ctx.arc(cx, py + 4, 5.5, 0, Math.PI * 2); ctx.fill();
+          }
+          ctx.fillStyle = '#9cc8ff';
+          ctx.fillRect(px + 2, py + plat.h - 3, plat.w - 4, 2);
+          continue;
+        }
         ctx.fillStyle = '#000000';
         ctx.fillRect(Math.round(plat.x), Math.round(plat.y), plat.w, plat.h);
         ctx.fillStyle = '#fc9838';

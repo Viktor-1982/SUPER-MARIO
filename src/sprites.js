@@ -66,13 +66,14 @@
       piranhaMain: '#00a800', piranhaHead: '#e52521'
     },
     snow: {
-      sky: '#7893d5',
-      groundBody: '#bcbcbc', groundLight: '#fcfcfc', groundDark: '#000000',
+      // Authentic 1985 NES Daytime Snow (Worlds 5-1, 5-2, 7-1): bright blue sky + orange-brown brick ground + white snowy hills/bushes/fences!
+      sky: '#5c94fc',
+      groundBody: '#c84c0c', groundLight: '#fcbcb0', groundDark: '#000000',
       brickBody: '#c84c0c', brickLight: '#fcbcb0', brickDark: '#000000',
       pipeLight: '#80d010', pipeMid: '#00a800', pipeDark: '#005800',
-      hillBody: '#bcbcbc', hillSpot: '#747474', hillHighlight: '#fcfcfc', hillOutline: '#000000',
+      hillBody: '#fcfcfc', hillSpot: '#bcbcbc', hillHighlight: '#fcfcfc', hillOutline: '#000000',
       bushLight: '#fcfcfc', bushDark: '#bcbcbc', bushOutline: '#000000',
-      cloudBody: '#fcfcfc', cloudShade: '#bcbcbc', cloudOutline: '#000000',
+      cloudBody: '#fcfcfc', cloudShade: '#afbfea', cloudOutline: '#93a6da',
       goombaBody: '#c84c0c', goombaFeet: '#000000',
       piranhaMain: '#00a800', piranhaHead: '#e52521'
     },
@@ -1423,13 +1424,15 @@
       }
     },
 
-    drawSpiny(ctx, enemy) {
-      const img = getImg('spiny');
+    drawSpiny(ctx, enemy, frame = 0) {
+      const key = enemy.hatched === false ? 'spiny_egg' : 'spiny';
+      const img = getImg(key) || getImg('spiny');
+      const flip = enemy.hatched === false ? (Math.floor(frame / 6) % 2 === 1) : (enemy.vx > 0);
       if (img) {
-        drawImgAnchored(ctx, img, enemy.x, enemy.y, enemy.w || 16, enemy.h || 16, enemy.vx > 0);
+        drawImgAnchored(ctx, img, enemy.x, enemy.y, enemy.w || 16, enemy.h || 16, flip);
         return;
       }
-      drawBitmap(ctx, SPINY_1, { R: '#d82800', W: '#fcfcfc', S: '#fc9838', K: '#000000' }, enemy.x, enemy.y, enemy.vx > 0, 1);
+      drawBitmap(ctx, SPINY_1, { R: '#d82800', W: '#fcfcfc', S: '#fc9838', K: '#000000' }, enemy.x, enemy.y, flip, 1);
     },
 
     drawLakitu(ctx, enemy) {
@@ -1445,9 +1448,18 @@
       const img = getImg('hammer_bro');
       if (img) {
         drawImgAnchored(ctx, img, enemy.x, enemy.y, enemy.w || 16, enemy.h || 24, enemy.facing > 0);
-        return;
+      } else {
+        drawBitmap(ctx, HAMMERBRO_1, { G: '#00a800', W: '#fcfcfc', Y: '#fc9838', K: '#000000' }, enemy.x, enemy.y - 6, enemy.facing < 0, 1);
       }
-      drawBitmap(ctx, HAMMERBRO_1, { G: '#00a800', W: '#fcfcfc', Y: '#fc9838', K: '#000000' }, enemy.x, enemy.y - 6, enemy.facing < 0, 1);
+      // Authentic 1985 NES telegraph: visibly hold hammer raised above head right before throwing!
+      if (enemy.windupTimer > 0 && !enemy.flipped && !enemy.dead) {
+        const hx = Math.round(enemy.x + (enemy.facing > 0 ? 11 : -2));
+        const hy = Math.round(enemy.y - 10);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(hx, hy, 7, 5);
+        ctx.fillStyle = '#fc9838';
+        ctx.fillRect(hx + 2, hy + 5, 2, 5);
+      }
     },
 
     drawHammer(ctx, h, frame) {

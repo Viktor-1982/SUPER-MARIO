@@ -452,36 +452,91 @@
           ]
         },
         underwater: {
-          // Classic 3/4 Underwater Waltz (150 BPM, 12 NES frames per 8th = 200ms)
+          // Exact Koji Kondo 1985 NES 3/4 Underwater Waltz (C Major, 150 BPM quarter = 200ms per 8th, 6 slots/bar, legato sustain!)
           stepMs: 200,
           loopStart: 0,
+          sustainLead: true,
           drums: false,
           lead: [
-            'D4','E4','Fs4','G4','A4','As4', 'B4','B4','B4','B4',null,'G4',
-            'E5',null,null,'Ds5',null,null, 'E5',null,null,null,'G4','A4',
-            'B4','C5','D5','E5',null,'D5', 'B4',null,null,null,'G4',null,
-            'D5',null,null,'Cs5',null,null, 'D5',null,null,null,'G4','A4',
-            'B4','C5','Cs5','D5',null,'G4', 'F5',null,null,null,'G4',null,
-            'G5',null,null,'G5','G5','G5', 'G5','F5','E5','F5','E5','D5',
-            'E5',null,null,'C5',null,null, 'A4',null,null,'C5',null,null
+            // Bars 1-2: Iconic rising chromatic pickup (quarter notes = 2 slots each)
+            'D4',null,'E4',null,'Fs4',null,      'G4',null,'A4',null,'As4',null,
+            // Bars 3-4: B4 waltz cadence
+            'B4',null,'B4',null,'B4',null,       'B4',null,null,null,'G4',null,
+            // Bars 5-8: Main theme phrase 1 (C major)
+            'E5',null,null,null,null,null,       'Ds5',null,null,null,null,null,
+            'E5',null,null,null,null,null,       null,'G4','A4','B4','C5','D5',
+            // Bars 9-12: Phrase 2 -> resolves onto D5
+            'E5',null,null,null,null,null,       'Ds5',null,null,null,'F5',null,
+            'D5',null,null,null,null,null,       null,null,null,null,'G4',null,
+            // Bars 13-16: G7 phrase 1
+            'D5',null,null,null,null,null,       'Cs5',null,null,null,null,null,
+            'D5',null,null,null,null,null,       null,'G4','A4','B4','C5','Cs5',
+            // Bars 17-20: G7 phrase 2 -> resolves back to E5 (C)
+            'D5',null,null,null,null,null,       'G4',null,null,null,'F5',null,
+            'E5',null,null,null,null,null,       null,null,null,null,'G4',null,
+            // Bars 21-24: High climax G5 -> A5 -> F5
+            'G5',null,null,null,null,null,       'G5',null,'G5',null,'G5',null,
+            'G5',null,null,null,'A5',null,       'G5',null,'F5',null,null,null,
+            // Bars 25-28: Descending F5 -> G5 -> E5
+            'F5',null,null,null,null,null,       'F5',null,'F5',null,'F5',null,
+            'F5',null,null,null,'G5',null,       'F5',null,'E5',null,null,null,
+            // Bars 29-32: Warm resolution A4-B4-C5 -> D5-B4 -> C5
+            'E5',null,'A4',null,'B4',null,       'C5',null,null,null,null,null,
+            'D5',null,null,null,'B4',null,       'C5',null,null,null,null,null
           ],
           harm: [
-            null,null,null,null,null,null, 'G4',null,'D4','G4',null,'D4',
-            'G4',null,'C4','Fs4',null,'C4', 'G4',null,'C4','G4',null,'C4',
-            'G4',null,'D4','G4',null,'D4', 'G4',null,'D4','G4',null,'D4',
-            'F4',null,'B3','E4',null,'As3', 'F4',null,'B3','F4',null,'B3',
-            'F4',null,'B3','F4',null,'B3', 'B4',null,'G4','B4',null,'G4',
-            'B4',null,'G4','B4',null,'G4', 'B4',null,'G4','B4',null,'G4',
-            'G4',null,'E4','G4',null,'E4', 'E4',null,'C4','E4',null,'C4'
+            // Bars 1-2: silent pickup
+            null,null,null,null,null,null,       null,null,null,null,null,null,
+            // Bars 3-4: 3/4 waltz OOM - PAH - PAH (chords on beats 2 & 3!)
+            null,null,'D4',null,'G4',null,       null,null,'D4',null,'G4',null,
+            // Bars 5-8: C / Cdim / C / C
+            null,null,'G4',null,'C5',null,       null,null,'Fs4',null,'C5',null,
+            null,null,'G4',null,'C5',null,       null,null,'G4',null,'C5',null,
+            // Bars 9-12: C / Cdim / G7 / G7
+            null,null,'G4',null,'C5',null,       null,null,'Fs4',null,'C5',null,
+            null,null,'F4',null,'B4',null,       null,null,'F4',null,'B4',null,
+            // Bars 13-16: G7 / G7 / G7 / G7
+            null,null,'F4',null,'B4',null,       null,null,'E4',null,'As4',null,
+            null,null,'F4',null,'B4',null,       null,null,'F4',null,'B4',null,
+            // Bars 17-20: G7 / G7 / C / C
+            null,null,'F4',null,'B4',null,       null,null,'F4',null,'B4',null,
+            null,null,'G4',null,'C5',null,       null,null,'G4',null,'C5',null,
+            // Bars 21-24: C / A7 / Dm / Dm
+            null,null,'G4',null,'E5',null,       null,null,'E4',null,'Cs5',null,
+            null,null,'A4',null,'F5',null,       null,null,'A4',null,'F5',null,
+            // Bars 25-28: G7 / G7 / G7 / C
+            null,null,'G4',null,'D5',null,       null,null,'G4',null,'D5',null,
+            null,null,'G4',null,'D5',null,       null,null,'G4',null,'C5',null,
+            // Bars 29-32: F / F / G7 / C
+            null,null,'A4',null,'C5',null,       null,null,'A4',null,'C5',null,
+            null,null,'F4',null,'B4',null,       null,null,'E4',null,'G4',null
           ],
           bass: [
-            null,null,null,null,null,null, 'G2',null,'D3','G2',null,'D3',
-            'C3',null,'G3','C3',null,'G3', 'C3',null,'G3','C3',null,'G3',
-            'G2',null,'D3','G2',null,'D3', 'G2',null,'D3','G2',null,'D3',
-            'G2',null,'D3','G2',null,'D3', 'G2',null,'D3','G2',null,'D3',
-            'G2',null,'D3','G2',null,'D3', 'G2',null,'D3','G2',null,'D3',
-            'G2',null,'D3','G2',null,'D3', 'G2',null,'D3','G2',null,'D3',
-            'C3',null,'G3','C3',null,'G3', 'C3',null,'G3','C3',null,'G3'
+            // Bars 1-2: silent pickup
+            null,null,null,null,null,null,       null,null,null,null,null,null,
+            // Bars 3-4: G2 waltz downbeat
+            'G2',null,'D3',null,'G3',null,       'G2',null,'D3',null,'G2',null,
+            // Bars 5-8: C3 waltz downbeats
+            'C3',null,'G3',null,'E3',null,       'C3',null,'Fs3',null,'Ds3',null,
+            'C3',null,'G3',null,'E3',null,       'C3',null,'G3',null,'E3',null,
+            // Bars 9-12: C3 -> G2
+            'C3',null,'G3',null,'E3',null,       'C3',null,'Fs3',null,'Ds3',null,
+            'G2',null,'D3',null,'F3',null,       'G2',null,'D3',null,'F3',null,
+            // Bars 13-16: G2 waltz
+            'G2',null,'D3',null,'F3',null,       'G2',null,'Cs3',null,'E3',null,
+            'G2',null,'D3',null,'F3',null,       'G2',null,'D3',null,'F3',null,
+            // Bars 17-20: G2 -> C3
+            'G2',null,'D3',null,'F3',null,       'G2',null,'D3',null,'B2',null,
+            'C3',null,'G3',null,'E3',null,       'C3',null,'G3',null,'E3',null,
+            // Bars 21-24: C3 -> A2 -> D3
+            'C3',null,'G3',null,'E3',null,       'A2',null,'E3',null,'G3',null,
+            'D3',null,'A3',null,'F3',null,       'D3',null,'A3',null,'F3',null,
+            // Bars 25-28: G2 -> C3
+            'G2',null,'D3',null,'F3',null,       'G2',null,'D3',null,'F3',null,
+            'G2',null,'D3',null,'F3',null,       'C3',null,'G3',null,'E3',null,
+            // Bars 29-32: F2 -> G2 -> C3
+            'F2',null,'C3',null,'A3',null,       'F2',null,'C3',null,'A3',null,
+            'G2',null,'D3',null,'F3',null,       'C3',null,'G3',null,'C3',null
           ]
         },
         castle: {
@@ -555,7 +610,14 @@
             const dur = stepSec * 0.86;
 
             if (leadNote && NOTE_FREQ[leadNote]) {
-              this.tone(NOTE_FREQ[leadNote], nextStepTime, dur * 1.05, 'warmLead', 0.19, null, true);
+              let leadDur = dur * 1.05;
+              if (tr.sustainLead) {
+                // Legato sustain across trailing null slots so waltz dotted-halves sing smoothly!
+                let span = 1;
+                while (span < 6 && idx + span < tr.lead.length && tr.lead[idx + span] === null) span++;
+                leadDur = baseStepSec * span * 0.94;
+              }
+              this.tone(NOTE_FREQ[leadNote], nextStepTime, leadDur, 'warmLead', 0.19, null, !tr.sustainLead);
             }
             if (harmNote && NOTE_FREQ[harmNote]) {
               this.tone(NOTE_FREQ[harmNote], nextStepTime, dur * 1.0, 'warmHarm', 0.11, null, true);

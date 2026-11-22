@@ -216,14 +216,15 @@
   }
 
   class Spiny {
-    constructor(x, y, vx = -0.75) {
+    constructor(x, y, vx = 0, hatched = false) {
       this.type = 'spiny';
       this.x = x;
       this.y = y;
       this.w = 16;
       this.h = 16;
       this.vx = vx;
-      this.vy = -2.2;
+      this.vy = hatched ? 0 : -2.7;
+      this.hatched = hatched;
       this.active = true;
       this.dead = false;
       this.flipped = false;
@@ -238,8 +239,13 @@
         if (this.y > 270) this.remove = true;
         return;
       }
-      this.vy = Math.min(MAX_FALL, this.vy + GRAVITY);
+      this.vy = Math.min(MAX_FALL, this.vy + (this.hatched ? GRAVITY : 0.19));
       engine.moveEntity(this, true);
+      if (!this.hatched && this.onGround) {
+        // Authentic 1985 NES: Spiny Egg hatches the instant it touches the ground and walks TOWARD Mario!
+        this.hatched = true;
+        this.vx = engine.player.x < this.x ? -0.65 : 0.65;
+      }
       if (this.y > 260) this.remove = true;
     }
   }
@@ -248,13 +254,17 @@
     constructor(x, y) {
       this.type = 'lakitu';
       this.x = x;
-      this.y = y;
+      this.y = Math.max(30, Math.min(44, y));
+      this.baseY = this.y;
       this.w = 16;
-      this.h = 16;
-      this.vx = 0;
+      this.h = 24;
+      this.vx = -1.2;
       this.vy = 0;
+      this.phase = 0;
       this.facing = -1;
-      this.throwTimer = 95;
+      this.throwTimer = 115;
+      this.duckTimer = 0;
+      this.retreating = false;
       this.active = false;
       this.dead = false;
       this.flipped = false;
@@ -269,25 +279,47 @@
         if (this.y > 270) this.remove = true;
         return;
       }
-      // Hover above player
-      const targetX = engine.player.x + 28;
-      this.vx += (targetX > this.x ? 0.08 : -0.08);
-      this.vx = Math.max(-1.8, Math.min(1.8, this.vx));
-      this.x += this.vx;
-      this.facing = engine.player.x < this.x ? -1 : 1;
 
-      // Stop following near flagpole
-      if (engine.level.flagpoleCol && this.x > (engine.level.flagpoleCol - 12) * 16) {
-        this.vx = -1.5;
+      // Authentic 1985 NES: Lakitu retreats & flies away before the final staircase/flagpole!
+      const safeEndX = engine.level.flagpoleCol ? (engine.level.flagpoleCol - 28) * 16 : Infinity;
+      if (engine.player.x >= safeEndX) {
+        this.retreating = true;
+      }
+      if (this.retreating) {
+        this.vx = Math.max(-2.6, this.vx - 0.12);
+        this.x += this.vx;
+        this.facing = -1;
+        if (this.x < engine.cameraX - 48) this.remove = true;
+        return;
       }
 
-      this.throwTimer--;
-      if (this.throwTimer <= 0) {
-        this.throwTimer = 145 + Math.floor(Math.random() * 55);
-        const activeSpinies = engine.enemies.filter(e => e.type === 'spiny' && !e.dead).length;
-        if (activeSpinies < 4) {
-          const dir = engine.player.x < this.x ? -0.75 : 0.75;
-          engine.enemies.push(new Spiny(this.x, this.y + 6, dir));
+      // Smooth NES cloud flight tracking slightly ahead of Mario (fast enough to keep up with sprint!)
+      const leadOffset = engine.player.vx >= 0 ? 48 : -28;
+      const targetX = engine.player.x + leadOffset;
+      const dist = targetX - this.x;
+      const accel = Math.abs(dist) > 64 ? 0.16 : 0.08;
+      this.vx += dist > 0 ? accel : -accel;
+      const maxSpd = Math.abs(dist) > 72 ? 2.75 : 2.1;
+      this.vx = Math.max(-maxSpd, Math.min(maxSpd, this.vx));
+      this.x += this.vx;
+      this.phase += 0.06;
+      this.y = this.baseY + Math.sin(this.phase) * 4 + (this.duckTimer > 0 ? 3 : 0);
+      this.facing = engine.player.x < this.x ? -1 : 1;
+
+      if (this.duckTimer > 0) {
+        this.duckTimer--;
+        if (this.duckTimer === 0) {
+          const activeSpinies = engine.enemies.filter(e => e.type === 'spiny' && !e.dead).length;
+          if (activeSpinies < 3) {
+            const eggVx = Math.max(-0.35, Math.min(0.35, this.vx * 0.2));
+            engine.enemies.push(new Spiny(this.x, this.y + 4, eggVx, false));
+          }
+          this.throwTimer = 140 + Math.floor(Math.random() * 55);
+        }
+      } else {
+        this.throwTimer--;
+        if (this.throwTimer <= 0 && Math.abs(this.x - engine.player.x) < 150) {
+          this.duckTimer = 18;
         }
       }
     }
@@ -301,11 +333,16 @@
       this.homeX = x;
       this.w = 16;
       this.h = 18;
-      this.vx = -0.4;
+      this.vx = -0.38;
       this.vy = 0;
       this.facing = -1;
-      this.jumpTimer = 90;
-      this.throwTimer = 55;
+      this.onGround = false;
+      this.jumpTimer = 95 + Math.floor(Math.random() * 45);
+      this.dropThroughTimer = 0;
+      this.throwTimer = 48 + Math.floor(Math.random() * 30);
+      this.windupTimer = 0;
+      this.burstLeft = 1 + Math.floor(Math.random() * 2);
+      this.chaseTimer = 1100; // Authentic NES anti-camping march after ~18s
       this.active = false;
       this.dead = false;
       this.flipped = false;
@@ -321,22 +358,100 @@
         return;
       }
       this.facing = engine.player.x < this.x ? -1 : 1;
-      if (this.x < this.homeX - 18) this.vx = 0.4;
-      if (this.x > this.homeX + 18) this.vx = -0.4;
 
-      this.vy = Math.min(MAX_FALL, this.vy + GRAVITY);
-      engine.moveEntity(this, true);
+      if (this.chaseTimer > 0) {
+        this.chaseTimer--;
+        if (this.x < this.homeX - 18) this.vx = 0.38;
+        if (this.x > this.homeX + 18) this.vx = -0.38;
+      } else {
+        this.vx = this.facing * 0.42;
+      }
+
+      // Horizontal movement with solid wall turn-around
+      this.x += this.vx;
+      const topR = Math.floor((this.y + 2) / 16);
+      const botR = Math.floor((this.y + this.h - 2) / 16);
+      if (this.vx > 0) {
+        const rc = Math.floor((this.x + this.w) / 16);
+        for (let r = topR; r <= botR; r++) {
+          if (engine.isSolidTile(rc, r)) { this.x = rc * 16 - this.w; this.vx = -this.vx; break; }
+        }
+      } else if (this.vx < 0) {
+        const lc = Math.floor(this.x / 16);
+        for (let r = topR; r <= botR; r++) {
+          if (engine.isSolidTile(lc, r)) { this.x = (lc + 1) * 16; this.vx = -this.vx; break; }
+        }
+      }
+
+      // Vertical physics: Authentic 1985 NES one-way tier hopping (passes UP through brick rows & drops DOWN through tiers!)
+      if (this.dropThroughTimer > 0) this.dropThroughTimer--;
+      this.vy = Math.min(4.2, this.vy + 0.19);
+      this.y += this.vy;
+      this.onGround = false;
+      const leftC = Math.floor((this.x + 2) / 16);
+      const rightC = Math.floor((this.x + this.w - 2) / 16);
+      if (this.vy >= 0) {
+        const bot = Math.floor((this.y + this.h) / 16);
+        // While dropping through an upper brick tier, ignore brick row until below it (never drop through bottom ground row >= 13!)
+        const allowDrop = this.dropThroughTimer > 0 && bot < 12;
+        if (!allowDrop) {
+          for (let c = leftC; c <= rightC; c++) {
+            if (engine.isSolidTile(c, bot)) {
+              this.y = bot * 16 - this.h;
+              this.vy = 0;
+              this.onGround = true;
+              break;
+            }
+          }
+        }
+      }
 
       this.jumpTimer--;
       if (this.jumpTimer <= 0 && this.onGround) {
-        this.vy = -5.0;
-        this.jumpTimer = 110 + Math.floor(Math.random() * 60);
+        const midCol = Math.floor((this.x + this.w / 2) / 16);
+        const curFootRow = Math.floor((this.y + this.h + 2) / 16);
+        const hasUpperTier = curFootRow >= 8 && (
+          engine.isSolidTile(midCol, curFootRow - 4) ||
+          engine.isSolidTile(midCol - 1, curFootRow - 4) ||
+          engine.isSolidTile(midCol + 1, curFootRow - 4)
+        );
+        const hasLowerFloor = curFootRow <= 10 && (
+          engine.isSolidTile(midCol, curFootRow + 4) ||
+          engine.isSolidTile(midCol, 13)
+        );
+        if (hasUpperTier && Math.random() < 0.6) {
+          // High leap up onto the upper brick tier!
+          this.vy = -5.4;
+        } else if (hasLowerFloor && Math.random() < 0.55) {
+          // Authentic NES drop-hop down through brick tier onto lower tier/ground!
+          this.vy = -2.2;
+          this.dropThroughTimer = 20;
+        } else {
+          // Standard vertical hop
+          this.vy = -4.2;
+        }
+        this.onGround = false;
+        this.jumpTimer = 115 + Math.floor(Math.random() * 65);
       }
 
-      this.throwTimer--;
-      if (this.throwTimer <= 0) {
-        this.throwTimer = 70 + Math.floor(Math.random() * 45);
-        engine.spawnHammer(this.x + 4, this.y - 4, this.facing);
+      // Telegraphed hammer throws in classic NES bursts with breathing room between volleys
+      if (this.windupTimer > 0) {
+        this.windupTimer--;
+        if (this.windupTimer === 0) {
+          engine.spawnHammer(this.x + (this.facing > 0 ? 10 : -2), this.y - 6, this.facing);
+          this.burstLeft--;
+          if (this.burstLeft > 0) {
+            this.throwTimer = 26 + Math.floor(Math.random() * 14);
+          } else {
+            this.burstLeft = 1 + Math.floor(Math.random() * 2);
+            this.throwTimer = 78 + Math.floor(Math.random() * 48);
+          }
+        }
+      } else {
+        this.throwTimer--;
+        if (this.throwTimer <= 0 && Math.abs(this.x - engine.player.x) < 190) {
+          this.windupTimer = 18;
+        }
       }
       if (this.y > 260) this.remove = true;
     }
@@ -348,16 +463,16 @@
       this.y = y;
       this.w = 8;
       this.h = 8;
-      this.vx = dir * 1.45;
-      this.vy = -4.2;
-      this.life = 140;
+      this.vx = dir * 1.15;
+      this.vy = -4.1;
+      this.life = 150;
       this.remove = false;
     }
 
     update() {
       this.x += this.vx;
       this.y += this.vy;
-      this.vy += 0.16;
+      this.vy += 0.14;
       this.life--;
       if (this.life <= 0 || this.y > 260) this.remove = true;
     }
@@ -370,7 +485,8 @@
       this.y = y;
       this.w = 16;
       this.h = 14;
-      this.vx = dir * 2.15;
+      // Exact 1985 NES SMB1 Bullet Bill speed ($01.80 ≈ 1.55 px/f — readable & stompable!)
+      this.vx = dir * 1.55;
       this.vy = 0;
       this.active = true;
       this.dead = false;
@@ -593,17 +709,17 @@
   class Springboard {
     constructor(x, y) {
       this.x = x;
-      this.y = y - 10; // Authentic tall NES coil spring (26px tall, planted cleanly on row 13!)
+      this.y = y - 12; // Authentic tall NES coil spring (28px tall, planted solidly on row 13!)
       this.baseY = y + 16;
       this.w = 16;
-      this.h = 26;
+      this.h = 28;
       this.compress = 0;
       this.launchTimer = 0;
       this.boostHeld = false;
     }
     update() {
       if (this.launchTimer <= 0 && this.compress > 0) {
-        this.compress = Math.max(0, this.compress - 1.2);
+        this.compress = Math.max(0, this.compress - 1.5);
       }
     }
   }
@@ -622,6 +738,8 @@
       this.wrap = cfg.wrap || 0;
       this.drop = !!cfg.drop;
       this.seesaw = !!cfg.seesaw;
+      this.cloudRide = !!cfg.cloudRide;
+      this.cloudActive = false;
       this.pulleyId = cfg.pulleyId || 0;
       this.pulleyTopY = cfg.pulleyTopY || 36;
       this.partner = null;
@@ -632,12 +750,29 @@
       this.dir = 1;
       this.dx = 0;
       this.dy = 0;
+      this.prevX = cfg.x;
+      this.prevY = cfg.y;
+      this.justWrapped = false;
+      this.detachJustHappened = false;
     }
 
     update(isRidden = false, engine = null) {
       const prevX = this.x;
       const prevY = this.y;
-      if (this.pulleyId && this.partner) {
+      this.prevX = prevX;
+      this.prevY = prevY;
+      this.justWrapped = false;
+      if (this.detachJustHappened) {
+        this.detachJustHappened = false;
+        return;
+      }
+      if (this.cloudRide) {
+        // Authentic 1985 NES Cloud Heaven platform: stays waiting until Mario steps on, then glides right across the sky!
+        if (isRidden) this.cloudActive = true;
+        if (this.cloudActive && this.x < this.max) {
+          this.x = Math.min(this.max, this.x + this.speed);
+        }
+      } else if (this.pulleyId && this.partner) {
         // Real 1985 NES Pulley / Balance Platform Pair (3-3, 4-3, 6-3)!
         if (this.detached) {
           this.pulleyVy = Math.min(4.2, this.pulleyVy + 0.16);
@@ -649,15 +784,22 @@
               this.respawnTimer = 0;
               this.pulleyVy = 0;
               this.y = this.homeY;
+              this.justWrapped = true;
               this.partner.detached = false;
               this.partner.respawnTimer = 0;
               this.partner.pulleyVy = 0;
               this.partner.y = this.partner.homeY;
+              this.partner.justWrapped = true;
+              this.partner.dx = 0;
+              this.partner.dy = 0;
             }
           }
         } else {
           // Only master (left-most of the pair) integrates the shared pulley balance
           if (this.x <= this.partner.x) {
+            const partnerPrevY = this.partner.y;
+            this.partner.prevX = this.partner.x;
+            this.partner.prevY = partnerPrevY;
             const partnerRidden = !!(engine && engine.player && engine.player.ridingPlatform === this.partner);
             if (isRidden && !partnerRidden) {
               this.pulleyVy = Math.min(1.15, this.pulleyVy + 0.045);
@@ -674,24 +816,34 @@
             if (this.y <= this.pulleyTopY + 10 || this.partner.y <= this.pulleyTopY + 10) {
               this.detached = true;
               this.partner.detached = true;
+              this.partner.detachJustHappened = true;
               this.pulleyVy = 0.6;
               this.partner.pulleyVy = 0.6;
               if (engine) engine.addScore(1000, this.x + this.w / 2, this.y - 8);
             }
             this.partner.dx = 0;
-            this.partner.dy = -this.pulleyVy;
+            this.partner.dy = this.partner.y - partnerPrevY;
           }
         }
       } else if (this.wrap) {
         // Continuous NES vertical elevator wrap-around (1-2, 2-4, 4-2, 5-4, 5-2/6-2 underwater)
+        // Wrapping resets dx/dy = 0 and sets justWrapped = true so Mario NEVER teleports across the screen!
         this.y += this.speed * this.wrap;
-        if (this.wrap > 0 && this.y > this.max) this.y = this.min;
-        if (this.wrap < 0 && this.y < this.min) this.y = this.max;
+        if (this.wrap > 0 && this.y > this.max) {
+          this.y = this.min;
+          this.justWrapped = true;
+        } else if (this.wrap < 0 && this.y < this.min) {
+          this.y = this.max;
+          this.justWrapped = true;
+        }
       } else if (this.drop) {
         // Falling lift: drops when Mario stands on it, resets cleanly if Mario gets off
         if (isRidden) {
           this.y += this.speed;
-          if (this.y > 256) this.y = this.homeY;
+          if (this.y > 256) {
+            this.y = this.homeY;
+            this.justWrapped = true;
+          }
         } else if (this.y > this.homeY) {
           this.y = Math.max(this.homeY, this.y - 0.5);
         }
@@ -710,7 +862,10 @@
         if (this.y >= this.max) { this.y = this.max; this.dir = -1; }
         if (this.y <= this.min) { this.y = this.min; this.dir = 1; }
       }
-      if (!(this.pulleyId && this.partner && this.x > this.partner.x && !this.detached)) {
+      if (this.justWrapped) {
+        this.dx = 0;
+        this.dy = 0;
+      } else if (!(this.pulleyId && this.partner && this.x > this.partner.x && !this.detached)) {
         this.dx = this.x - prevX;
         this.dy = this.y - prevY;
       }

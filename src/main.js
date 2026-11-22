@@ -283,24 +283,28 @@
   };
 
   const GP_PRESETS = {
-    standard: {
-      jump: [0, 3],
-      run: [1, 2, 4, 5, 6, 7],
+    // Official Nintendo Super Mario All-Stars / SNES / PlayStation / Xbox classic diamond split:
+    // Left (□) + Top (△) + Shoulders = B (Run / Fire), Bottom (✕) + Right (○) = A (Jump)!
+    classic: {
+      jump: [0, 1],
+      run: [2, 3, 4, 5, 6, 7],
       start: [9],
       select: [8],
       upToJump: false
     },
+    // Classic 2-button NES / Dendy lower-pair layout:
+    // Bottom/Left (✕, □) = B (Run / Fire), Right (○) = A (Jump)!
     nes: {
-      jump: [1, 3],
-      run: [0, 2, 4, 5, 6, 7],
+      jump: [1],
+      run: [0, 2, 3, 4, 5, 6, 7],
       start: [9],
       select: [8],
       upToJump: false
     }
   };
 
-  const DEFAULT_GP_CFG = GP_PRESETS.standard;
-  const GP_STORAGE_KEY = 'smb_gamepad_cfg_v3';
+  const DEFAULT_GP_CFG = GP_PRESETS.classic;
+  const GP_STORAGE_KEY = 'smb_gamepad_cfg_v4';
 
   function cloneGpCfg(src) {
     return {
@@ -360,6 +364,14 @@
       gpPresetNes.classList.toggle('active', isNes);
       gpPresetMario.classList.toggle('active', !isNes);
     }
+    for (const dBtn of document.querySelectorAll('[data-gp-face]')) {
+      const idx = Number(dBtn.dataset.gpFace);
+      const role = gpCfg.jump.includes(idx) ? 'Прыж' : (gpCfg.run.includes(idx) ? 'Бег' : '—');
+      const roleEl = dBtn.querySelector('small');
+      if (roleEl) roleEl.textContent = role;
+      dBtn.classList.toggle('role-jump', gpCfg.jump.includes(idx));
+      dBtn.classList.toggle('role-run', gpCfg.run.includes(idx));
+    }
   }
 
   function openGpModal() {
@@ -402,9 +414,9 @@
   if (gpDone) gpDone.addEventListener('click', closeGpModal);
   if (gpModal) gpModal.addEventListener('click', (e) => { if (e.target === gpModal) closeGpModal(); });
   if (gpUpJump) gpUpJump.addEventListener('change', () => { gpCfg.upToJump = gpUpJump.checked; saveGpCfg(); });
-  if (gpPresetMario) gpPresetMario.addEventListener('click', () => applyPreset('standard'));
+  if (gpPresetMario) gpPresetMario.addEventListener('click', () => applyPreset('classic'));
   if (gpPresetNes) gpPresetNes.addEventListener('click', () => applyPreset('nes'));
-  if (gpReset) gpReset.addEventListener('click', () => applyPreset('standard'));
+  if (gpReset) gpReset.addEventListener('click', () => applyPreset('classic'));
   for (const b of gpBindButtons) {
     b.addEventListener('click', () => {
       const act = b.dataset.gpBind;
@@ -594,6 +606,10 @@
 
     // If the Gamepad Config modal is open: capture remap press & show live button + action readout
     if (gpModal && !gpModal.hidden) {
+      for (const dBtn of document.querySelectorAll('[data-gp-face]')) {
+        const idx = Number(dBtn.dataset.gpFace);
+        dBtn.classList.toggle('pressed', canonNow.has(idx));
+      }
       if (gpLive) {
         const dirs = [left && '←', right && '→', up && '↑', down && '↓'].filter(Boolean);
         const btns = Array.from(canonNow).map(btnLabel);
