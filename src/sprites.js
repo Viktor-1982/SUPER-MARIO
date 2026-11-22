@@ -165,8 +165,9 @@
   }
 
   function drawImg(ctx, img, x, y, flipX = false, destW = null, destH = null) {
-    const w = destW || img.naturalWidth;
-    const h = destH || img.naturalHeight;
+    const sc = img._hdScale || 1;
+    const w = destW || (img.naturalWidth / sc);
+    const h = destH || (img.naturalHeight / sc);
     const px = Math.round(x);
     const py = Math.round(y);
     ctx.imageSmoothingEnabled = false;
@@ -182,8 +183,9 @@
   }
 
   function drawImgAnchored(ctx, img, boxX, boxY, boxW, boxH, flipX = false, destW = null, destH = null) {
-    const w = destW || img.naturalWidth;
-    const h = destH || img.naturalHeight;
+    const sc = img._hdScale || 1;
+    const w = destW || (img.naturalWidth / sc);
+    const h = destH || (img.naturalHeight / sc);
     const x = boxX + (boxW - w) / 2;
     const y = boxY + boxH - h;
     drawImg(ctx, img, x, y, flipX, w, h);
@@ -373,43 +375,44 @@
     '.KKKKK....KKKKK.'
   ];
 
-  // Crisp integer-stepped NES Rounded Hill (works for Small height=19 and Large height=35!)
+  // Smooth HD Rounded Mario Hill (classic NES silhouette & spots, zero blocky staircases!)
   function drawNesHill(ctx, baseX, baseY, height, theme) {
     const cx = Math.round(baseX);
     const by = Math.round(baseY);
-    const halfTop = 5;
+    const baseHalfW = height + 5;
 
-    for (let r = 0; r < height; r++) {
-      const y = by - height + r;
-      let halfW;
-      if (r === 0) halfW = halfTop - 2;
-      else if (r === 1) halfW = halfTop;
-      else if (r === 2) halfW = halfTop + 1;
-      else halfW = halfTop + r - 1;
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(cx - baseHalfW, by);
+    ctx.lineTo(cx - 8, by - height + 4);
+    ctx.quadraticCurveTo(cx, by - height - 3, cx + 8, by - height + 4);
+    ctx.lineTo(cx + baseHalfW, by);
+    ctx.closePath();
 
-      const xLeft = cx - halfW;
-      const width = halfW * 2;
+    const grad = ctx.createLinearGradient(cx - baseHalfW, by - height, cx + baseHalfW, by);
+    grad.addColorStop(0, theme.hillHighlight || theme.hillBody);
+    grad.addColorStop(0.35, theme.hillBody);
+    grad.addColorStop(1, theme.hillSpot || theme.hillBody);
+    ctx.fillStyle = grad;
+    ctx.fill();
 
-      // 1px black outer contour
-      ctx.fillStyle = theme.hillOutline;
-      ctx.fillRect(xLeft - 1, y, width + 2, 1);
+    ctx.lineWidth = 1.0;
+    ctx.strokeStyle = theme.hillOutline;
+    ctx.stroke();
 
-      // Green body inside contour
-      if (r > 0) {
-        ctx.fillStyle = theme.hillBody;
-        ctx.fillRect(xLeft, y, width, 1);
-      }
-    }
-
-    // Authentic NES curved dark-green/black hill spots!
+    // Smooth classic rounded hill spots
     const drawSpot = (sx, sy) => {
-      ctx.fillStyle = theme.hillOutline;
-      ctx.fillRect(sx, sy, 2, 1);
-      ctx.fillRect(sx + 2, sy + 1, 1, 3);
+      ctx.beginPath();
+      ctx.ellipse(sx + 0.5, sy + 2.2, 1.8, 2.4, 0, 0, Math.PI * 2);
       ctx.fillStyle = theme.hillSpot;
-      ctx.fillRect(sx - 1, sy + 1, 3, 3);
+      ctx.fill();
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = theme.hillOutline;
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.ellipse(sx - 0.1, sy + 1.6, 0.55, 0.9, 0, 0, Math.PI * 2);
       ctx.fillStyle = theme.hillHighlight;
-      ctx.fillRect(sx - 1, sy + 1, 1, 2);
+      ctx.fill();
     };
 
     if (height >= 30) {
@@ -422,26 +425,90 @@
       drawSpot(cx - 6, by - 12);
       drawSpot(cx + 5, by - 9);
     }
+    ctx.restore();
   }
 
   function drawWideCloud(ctx, x, y, midCount, pal) {
     const px = Math.round(x);
     const py = Math.round(y);
-    drawBitmap(ctx, CLOUD_LEFT, pal, px, py);
-    for (let i = 0; i < midCount; i++) {
-      drawBitmap(ctx, CLOUD_MID, pal, px + 16 + i * 16, py);
+    const totalW = 32 + midCount * 16;
+    const puffs = 2 + midCount;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(px + 6, py + 15);
+    ctx.quadraticCurveTo(px, py + 14.5, px + 1, py + 9.5);
+    ctx.quadraticCurveTo(px + 2, py + 4.5, px + 7.5, py + 5);
+    for (let i = 0; i < puffs; i++) {
+      const cx = px + 10 + (i * (totalW - 20)) / Math.max(1, puffs - 1);
+      ctx.arc(cx, py + 6.5, 6.2, Math.PI * 1.05, Math.PI * 1.95, false);
     }
-    drawBitmap(ctx, CLOUD_RIGHT, pal, px + 16 + midCount * 16, py);
+    ctx.quadraticCurveTo(px + totalW, py + 5.5, px + totalW - 1, py + 10.5);
+    ctx.quadraticCurveTo(px + totalW, py + 15, px + totalW - 6, py + 15.5);
+    ctx.closePath();
+
+    ctx.fillStyle = pal.W;
+    ctx.fill();
+    // Soft rounded cloud underside shading
+    ctx.save();
+    ctx.clip();
+    ctx.fillStyle = pal.S;
+    ctx.fillRect(px, py + 12.2, totalW, 4);
+    ctx.restore();
+
+    ctx.lineWidth = 0.85;
+    ctx.strokeStyle = '#3d63ad';
+    ctx.stroke();
+
+    // Cute classic Mario cloud eyes on each wide puff
+    ctx.fillStyle = '#1f3566';
+    for (let i = 0; i < Math.max(1, midCount + 1); i++) {
+      const ex = px + 13 + i * 16;
+      ctx.beginPath();
+      ctx.ellipse(ex, py + 8.5, 0.75, 1.5, 0, 0, Math.PI * 2);
+      ctx.ellipse(ex + 3.2, py + 8.5, 0.75, 1.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
   }
 
   function drawWideBush(ctx, x, y, midCount, pal) {
     const px = Math.round(x);
     const py = Math.round(y);
-    drawBitmap(ctx, BUSH_LEFT, pal, px, py);
-    for (let i = 0; i < midCount; i++) {
-      drawBitmap(ctx, BUSH_MID, pal, px + 16 + i * 16, py);
+    const totalW = 32 + midCount * 16;
+    const domes = 2 + midCount;
+
+    ctx.save();
+    ctx.beginPath();
+    ctx.moveTo(px + 2, py + 16);
+    ctx.quadraticCurveTo(px, py + 8, px + 7, py + 6);
+    for (let i = 0; i < domes; i++) {
+      const cx = px + 10 + (i * (totalW - 20)) / Math.max(1, domes - 1);
+      ctx.arc(cx, py + 8.5, 7.2, Math.PI * 1.08, Math.PI * 1.92, false);
     }
-    drawBitmap(ctx, BUSH_RIGHT, pal, px + 16 + midCount * 16, py);
+    ctx.quadraticCurveTo(px + totalW, py + 8, px + totalW - 2, py + 16);
+    ctx.closePath();
+
+    const grad = ctx.createLinearGradient(px, py, px, py + 16);
+    grad.addColorStop(0, pal.L);
+    grad.addColorStop(0.75, pal.L);
+    grad.addColorStop(1, pal.D);
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Soft leaf accents
+    ctx.fillStyle = pal.D;
+    for (let i = 0; i < domes; i++) {
+      const lx = px + 9 + i * 14;
+      ctx.beginPath();
+      ctx.ellipse(lx, py + 10.5, 1.6, 1.0, -0.2, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    ctx.lineWidth = 0.85;
+    ctx.strokeStyle = '#005a00';
+    ctx.stroke();
+    ctx.restore();
   }
 
   // ---- Refined 1985 NES Small Mario (12x16) ----
@@ -1420,8 +1487,11 @@
         ? getImg('piranha_ug')
         : (getImg('piranha_anim_f' + (Math.floor(frame / 8) % 3)) || getImg('piranha'));
       if (img) {
-        const dx = enemy.x + (16 - img.naturalWidth) / 2;
-        drawImg(ctx, img, dx, enemy.y, false);
+        const sc = img._hdScale || 1;
+        const w = img.naturalWidth / sc;
+        const h = img.naturalHeight / sc;
+        const dx = enemy.x + (16 - w) / 2;
+        drawImg(ctx, img, dx, enemy.y, false, w, h);
         return;
       }
       const t = THEMES[themeName] || THEMES.overworld;
@@ -1437,10 +1507,13 @@
         };
         const dImg = getImg(dMap[boss.revealedDisguise] || 'goomba_cast');
         if (dImg) {
+          const sc = dImg._hdScale || 1;
+          const dw = dImg.naturalWidth / sc;
+          const dh = dImg.naturalHeight / sc;
           ctx.save();
           ctx.translate(Math.round(boss.x + 16), Math.round(boss.y + 16));
           ctx.scale(1, -1); // upside-down tumble into lava!
-          ctx.drawImage(dImg, -dImg.naturalWidth / 2, -dImg.naturalHeight / 2);
+          ctx.drawImage(dImg, -dw / 2, -dh / 2, dw, dh);
           ctx.restore();
           return;
         }
@@ -1511,14 +1584,18 @@
     },
 
     drawFireball(ctx, x, y, frame) {
-      const px = Math.round(x), py = Math.round(y);
-      const c1 = Math.floor(frame / 3) % 2 === 0 ? '#e52521' : '#fbd000';
-      const c2 = Math.floor(frame / 3) % 2 === 0 ? '#fbd000' : '#fcfcfc';
-      ctx.fillStyle = c1;
-      ctx.fillRect(px + 1, py, 6, 8);
-      ctx.fillRect(px, py + 1, 8, 6);
-      ctx.fillStyle = c2;
-      ctx.fillRect(px + 2, py + 2, 4, 4);
+      const cx = x + 4, cy = y + 4;
+      const r = 3.6 + Math.sin(frame * 0.6) * 0.3;
+      ctx.save();
+      const grad = ctx.createRadialGradient(cx, cy, 0.5, cx, cy, r);
+      grad.addColorStop(0, '#ffffff');
+      grad.addColorStop(0.45, '#fbd000');
+      grad.addColorStop(1, '#e52521');
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = grad;
+      ctx.fill();
+      ctx.restore();
     },
 
     drawBowserFire(ctx, x, y, frame) {
@@ -1685,106 +1762,143 @@
           ctx.fillRect(px + 9, py + 7, 4, 4);
           break;
 
-        case '[':
+        case '[': {
+          const g = ctx.createLinearGradient(px, py, px + 16, py);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.28, t.pipeLight);
+          g.addColorStop(0.65, t.pipeMid);
+          g.addColorStop(1, t.pipeMid);
+          ctx.fillStyle = g;
+          ctx.fillRect(px + 0.5, py + 0.5, 15.5, 15);
+          ctx.fillStyle = 'rgba(255,255,255,0.35)';
+          ctx.fillRect(px + 3.2, py + 1.5, 2.6, 13);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px + 1, py + 1, 15, 14);
-          ctx.fillStyle = t.pipeLight;
-          ctx.fillRect(px + 1, py + 1, 15, 2);
-          ctx.fillRect(px + 3, py + 2, 4, 13);
-          ctx.fillRect(px + 9, py + 2, 1, 13);
+          ctx.fillRect(px, py, 16, 1);
+          ctx.fillRect(px, py, 1, 16);
+          ctx.fillRect(px, py + 15, 16, 1);
           break;
+        }
 
-        case ']':
+        case ']': {
+          const g = ctx.createLinearGradient(px, py, px + 16, py);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.45, t.pipeDark);
+          g.addColorStop(1, t.pipeDark);
+          ctx.fillStyle = g;
+          ctx.fillRect(px, py + 0.5, 15.5, 15);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px, py + 1, 15, 14);
-          ctx.fillStyle = t.pipeLight;
-          ctx.fillRect(px, py + 1, 14, 2);
-          ctx.fillStyle = t.pipeDark;
-          ctx.fillRect(px + 8, py + 2, 6, 13);
-          ctx.fillRect(px + 5, py + 2, 1, 13);
+          ctx.fillRect(px, py, 16, 1);
+          ctx.fillRect(px + 15, py, 1, 16);
+          ctx.fillRect(px, py + 15, 16, 1);
           break;
+        }
 
-        case '{':
+        case '{': {
+          const g = ctx.createLinearGradient(px + 1.5, py, px + 16, py);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.28, t.pipeLight);
+          g.addColorStop(0.75, t.pipeMid);
+          g.addColorStop(1, t.pipeMid);
+          ctx.fillStyle = g;
+          ctx.fillRect(px + 1.5, py, 14.5, 16);
+          ctx.fillStyle = 'rgba(255,255,255,0.32)';
+          ctx.fillRect(px + 4.2, py, 2.4, 16);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px + 1, py, 15, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px + 2, py, 14, 16);
-          ctx.fillStyle = t.pipeLight;
-          ctx.fillRect(px + 4, py, 4, 16);
-          ctx.fillRect(px + 10, py, 1, 16);
+          ctx.fillRect(px + 1, py, 1, 16);
           break;
+        }
 
-        case '}':
+        case '}': {
+          const g = ctx.createLinearGradient(px, py, px + 14.5, py);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.45, t.pipeDark);
+          g.addColorStop(1, t.pipeDark);
+          ctx.fillStyle = g;
+          ctx.fillRect(px, py, 14.5, 16);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 15, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px, py, 14, 16);
-          ctx.fillStyle = t.pipeDark;
-          ctx.fillRect(px + 7, py, 6, 16);
-          ctx.fillRect(px + 4, py, 1, 16);
+          ctx.fillRect(px + 14, py, 1, 16);
           break;
+        }
 
-        case '<':
-          // Horizontal side-entry pipe top-left lip
+        case '<': {
+          const g = ctx.createLinearGradient(px, py, px, py + 16);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.32, t.pipeLight);
+          g.addColorStop(1, t.pipeMid);
+          ctx.fillStyle = g;
+          ctx.fillRect(px + 0.5, py + 0.5, 15, 15.5);
+          ctx.fillStyle = 'rgba(255,255,255,0.32)';
+          ctx.fillRect(px + 1.5, py + 3.2, 13, 2.5);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px + 1, py + 1, 14, 15);
-          ctx.fillStyle = t.pipeLight;
-          ctx.fillRect(px + 1, py + 3, 14, 4);
-          ctx.fillRect(px + 1, py + 9, 14, 1);
+          ctx.fillRect(px, py, 16, 1);
+          ctx.fillRect(px, py, 1, 16);
+          ctx.fillRect(px + 15, py, 1, 16);
           break;
+        }
 
-        case ',':
-          // Horizontal side-entry pipe bottom-left lip
+        case ',': {
+          const g = ctx.createLinearGradient(px, py, px, py + 16);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.55, t.pipeDark);
+          g.addColorStop(1, t.pipeDark);
+          ctx.fillStyle = g;
+          ctx.fillRect(px + 0.5, py, 15, 15.5);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 16);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px + 1, py, 14, 15);
-          ctx.fillStyle = t.pipeDark;
-          ctx.fillRect(px + 1, py + 7, 14, 6);
-          ctx.fillRect(px + 1, py + 4, 14, 1);
+          ctx.fillRect(px, py, 1, 16);
+          ctx.fillRect(px + 15, py, 1, 16);
+          ctx.fillRect(px, py + 15, 16, 1);
           break;
+        }
 
-        case '-':
-          // Horizontal pipe top shaft
+        case '-': {
+          const g = ctx.createLinearGradient(px, py + 1, px, py + 16);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.32, t.pipeLight);
+          g.addColorStop(1, t.pipeMid);
+          ctx.fillStyle = g;
+          ctx.fillRect(px, py + 1.5, 16, 14.5);
+          ctx.fillStyle = 'rgba(255,255,255,0.30)';
+          ctx.fillRect(px, py + 4.2, 16, 2.4);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py + 1, 16, 15);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px, py + 2, 16, 14);
-          ctx.fillStyle = t.pipeLight;
-          ctx.fillRect(px, py + 4, 16, 4);
-          ctx.fillRect(px, py + 10, 16, 1);
+          ctx.fillRect(px, py + 1, 16, 1);
           break;
+        }
 
-        case '_':
-          // Horizontal pipe bottom shaft
+        case '_': {
+          const g = ctx.createLinearGradient(px, py, px, py + 15);
+          g.addColorStop(0, t.pipeMid);
+          g.addColorStop(0.55, t.pipeDark);
+          g.addColorStop(1, t.pipeDark);
+          ctx.fillStyle = g;
+          ctx.fillRect(px, py, 16, 14.5);
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 15);
-          ctx.fillStyle = t.pipeMid;
-          ctx.fillRect(px, py, 16, 14);
-          ctx.fillStyle = t.pipeDark;
-          ctx.fillRect(px, py + 7, 16, 6);
-          ctx.fillRect(px, py + 4, 16, 1);
+          ctx.fillRect(px, py + 14, 16, 1);
           break;
+        }
 
-        case 'O':
-          // Authentic 1985 NES solid Cloud platform block (2-1, 3-1, 4-2, 5-2, 6-2, 6-3!)
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(px + 1, py + 1, 14, 14);
+        case 'O': {
+          // Smooth crisp solid Mario Cloud block
+          ctx.save();
+          ctx.beginPath();
+          ctx.ellipse(px + 8, py + 8.5, 7.2, 6.4, 0, 0, Math.PI * 2);
           ctx.fillStyle = '#fcfcfc';
-          ctx.fillRect(px + 2, py + 2, 12, 11);
-          ctx.fillRect(px + 1, py + 4, 14, 8);
-          ctx.fillStyle = '#6888fc';
-          ctx.fillRect(px + 2, py + 12, 12, 2);
+          ctx.fill();
+          ctx.save();
+          ctx.clip();
+          ctx.fillStyle = '#8cb2ff';
+          ctx.fillRect(px, py + 12, 16, 4);
+          ctx.restore();
+          ctx.lineWidth = 0.9;
+          ctx.strokeStyle = '#000000';
+          ctx.stroke();
           ctx.fillStyle = '#000000';
-          ctx.fillRect(px + 5, py + 5, 2, 3);
-          ctx.fillRect(px + 10, py + 5, 2, 3);
+          ctx.beginPath();
+          ctx.ellipse(px + 6, py + 7.2, 0.85, 1.7, 0, 0, Math.PI * 2);
+          ctx.ellipse(px + 10.2, py + 7.2, 0.85, 1.7, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
           break;
+        }
 
         case '=':
           ctx.fillStyle = '#000000';
@@ -1797,15 +1911,26 @@
           ctx.fillRect(px + 7, py + 1, 2, 6);
           break;
 
-        case 'T':
-          ctx.fillStyle = '#000000';
-          ctx.fillRect(px, py, 16, 16);
-          ctx.fillStyle = '#e52521';
-          ctx.fillRect(px + 1, py + 1, 14, 13);
+        case 'T': {
+          ctx.save();
+          const g = ctx.createLinearGradient(px, py, px, py + 15);
+          g.addColorStop(0, '#ff4d3b');
+          g.addColorStop(1, '#c81c14');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.roundRect(px + 0.5, py + 0.5, 15, 13.5, 3);
+          ctx.fill();
+          ctx.lineWidth = 0.9;
+          ctx.strokeStyle = '#000000';
+          ctx.stroke();
           ctx.fillStyle = '#fcfcfc';
-          ctx.fillRect(px + 3, py + 4, 4, 4);
-          ctx.fillRect(px + 10, py + 6, 3, 3);
+          ctx.beginPath();
+          ctx.arc(px + 5, py + 6, 2.1, 0, Math.PI * 2);
+          ctx.arc(px + 11.5, py + 7.5, 1.7, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
           break;
+        }
 
         case 'I':
           ctx.fillStyle = '#000000';
@@ -1818,13 +1943,22 @@
 
         case 'L':
         {
-          const wave = Math.floor(frame / 8) % 2;
-          ctx.fillStyle = '#d82800';
-          ctx.fillRect(px, py + 3, 16, 13);
-          ctx.fillStyle = '#fc9838';
-          ctx.fillRect(px, py + 3, 16, 3);
-          ctx.fillStyle = '#fbd000';
-          ctx.fillRect(px + (wave ? 2 : 6), py + 2, 6, 2);
+          ctx.save();
+          const phase = frame * 0.14;
+          ctx.beginPath();
+          ctx.moveTo(px, py + 16);
+          ctx.lineTo(px, py + 4);
+          ctx.quadraticCurveTo(px + 4, py + 1.5 + Math.sin(phase) * 1.3, px + 8, py + 3.5);
+          ctx.quadraticCurveTo(px + 12, py + 5.5 - Math.sin(phase) * 1.3, px + 16, py + 4);
+          ctx.lineTo(px + 16, py + 16);
+          ctx.closePath();
+          const lg = ctx.createLinearGradient(px, py + 2, px, py + 16);
+          lg.addColorStop(0, '#fbd000');
+          lg.addColorStop(0.28, '#fc9838');
+          lg.addColorStop(1, '#c81c00');
+          ctx.fillStyle = lg;
+          ctx.fill();
+          ctx.restore();
           break;
         }
 
@@ -1846,28 +1980,29 @@
 
         case 'F':
           ctx.fillStyle = '#00a800';
-          ctx.fillRect(px + 7, py, 2, 16);
+          ctx.fillRect(px + 7, py, 2.2, 16);
           ctx.fillStyle = '#80d010';
-          ctx.fillRect(px + 7, py, 1, 16);
+          ctx.fillRect(px + 7, py, 0.9, 16);
           break;
 
         case 'G': {
-          // Authentic 1985 NES rounded green flagpole finial orb
-          const ORB_BMP = [
-            '..KKKK..',
-            '.KLLGGK.',
-            'KLGGGGGK',
-            'KGGGGGGK',
-            'KGGGGGGK',
-            'KGGGGGGK',
-            '.KGGGGK.',
-            '..KKKK..'
-          ];
           ctx.fillStyle = '#00a800';
-          ctx.fillRect(px + 7, py + 7, 2, 9);
+          ctx.fillRect(px + 7, py + 7, 2.2, 9);
           ctx.fillStyle = '#80d010';
-          ctx.fillRect(px + 7, py + 7, 1, 9);
-          drawBitmap(ctx, ORB_BMP, { K: '#000000', G: '#00a800', L: '#80d010' }, px + 4, py + 1, false, 1);
+          ctx.fillRect(px + 7, py + 7, 0.9, 9);
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(px + 8, py + 5, 3.8, 0, Math.PI * 2);
+          ctx.fillStyle = '#00a800';
+          ctx.fill();
+          ctx.lineWidth = 0.85;
+          ctx.strokeStyle = '#000000';
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(px + 6.8, py + 3.8, 1.3, 0, Math.PI * 2);
+          ctx.fillStyle = '#9cf030';
+          ctx.fill();
+          ctx.restore();
           break;
         }
 
@@ -1963,26 +2098,28 @@
     },
 
     drawFlagPennant(ctx, x, y) {
-      // Authentic 1985 NES crisp pixel-art white triangle flag with green Koopa skull emblem
-      const FLAG_BMP = [
-        '.............WWW',
-        '...........WWWWW',
-        '.........WWWWWWW',
-        '.......WWGGGWWWW',
-        '.....WWWGGGGGWWW',
-        '...WWWWGWGGWGWWW',
-        '.WWWWWWGWGGWGWWW',
-        'WWWWWWWGGGGGGWWW',
-        '.WWWWWWWGGWGGWWW',
-        '...WWWWWGGGGGWWW',
-        '.....WWWWGGGWWWW',
-        '.......WWWWWWWWW',
-        '.........WWWWWWW',
-        '...........WWWWW',
-        '.............WWW',
-        '...............W'
-      ];
-      drawBitmap(ctx, FLAG_BMP, { W: '#fcfcfc', G: '#00a800' }, x, y, false, 1);
+      // Smooth crisp white triangle pennant with rounded green Koopa emblem
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x + 15.5, y + 0.5);
+      ctx.lineTo(x + 1, y + 7.5);
+      ctx.lineTo(x + 15.5, y + 15.5);
+      ctx.closePath();
+      ctx.fillStyle = '#fcfcfc';
+      ctx.fill();
+      ctx.lineWidth = 0.7;
+      ctx.strokeStyle = '#1b1b1b';
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.arc(x + 10.5, y + 7.8, 3.1, 0, Math.PI * 2);
+      ctx.fillStyle = '#00a800';
+      ctx.fill();
+      ctx.fillStyle = '#fcfcfc';
+      ctx.beginPath();
+      ctx.arc(x + 9.4, y + 7.2, 0.75, 0, Math.PI * 2);
+      ctx.arc(x + 11.5, y + 7.2, 0.75, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
     },
 
     drawCastle(ctx, x, y) {

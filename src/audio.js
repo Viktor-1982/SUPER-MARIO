@@ -13,13 +13,12 @@
     C6: 1046.50, Cs6: 1108.73, D6: 1174.66, Ds6: 1244.51, E6: 1318.51, F6: 1396.91, G6: 1567.98
   };
 
-  // Build authentic NES 25% duty cycle pulse wave via Fourier series
-  function createPulseWave(ctx, duty = 0.25) {
-    const harmonics = 24;
-    const real = new Float32Array(harmonics);
-    const imag = new Float32Array(harmonics);
-    for (let n = 1; n < harmonics; n++) {
-      real[n] = (2 / (n * Math.PI)) * Math.sin(n * Math.PI * duty);
+  // Warm musical periodic waves (mellow marimba/rhodes & acoustic bass — never harsh 8-bit buzz!)
+  function createWarmWave(ctx, harmonics) {
+    const real = new Float32Array(harmonics.length + 1);
+    const imag = new Float32Array(harmonics.length + 1);
+    for (let i = 0; i < harmonics.length; i++) {
+      imag[i + 1] = harmonics[i];
     }
     return ctx.createPeriodicWave(real, imag, { disableNormalization: false });
   }
@@ -28,8 +27,9 @@
     constructor() {
       this.ctx = null;
       this.master = null;
-      this.pulse25 = null;
-      this.pulse12 = null;
+      this.warmLead = null;
+      this.warmHarm = null;
+      this.warmBass = null;
       this.muted = false;
       this.paused = false;
       this.pauseSuspendTimer = null;
@@ -48,32 +48,52 @@
       if (!AudioCtx) return;
       this.ctx = new AudioCtx();
       this.master = this.ctx.createGain();
-      this.master.gain.value = this.muted ? 0 : 0.30;
+      this.master.gain.value = this.muted ? 0 : 0.36;
 
-      // Authentic NES 2A03 / CRT TV analog output filter (removes harsh digital squeak)
-      const lp = this.ctx.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 2600;
-      lp.Q.value = 0.6;
-
+      // Warm studio-style analog output chain: gentle lowpass + subtle room ambience + soft compressor
       const hp = this.ctx.createBiquadFilter();
       hp.type = 'highpass';
-      hp.frequency.value = 75;
+      hp.frequency.value = 60;
+
+      const lp = this.ctx.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 2100;
+      lp.Q.value = 0.5;
+
+      const comp = this.ctx.createDynamicsCompressor();
+      comp.threshold.value = -14;
+      comp.knee.value = 18;
+      comp.ratio.value = 3.5;
+
+      // Subtle cozy room delay (adds natural warmth & depth instead of dry electronic beep)
+      const delay = this.ctx.createDelay(0.2);
+      delay.delayTime.value = 0.038;
+      const wetFilter = this.ctx.createBiquadFilter();
+      wetFilter.type = 'lowpass';
+      wetFilter.frequency.value = 1350;
+      const wetGain = this.ctx.createGain();
+      wetGain.gain.value = 0.16;
 
       this.master.connect(hp);
       hp.connect(lp);
-      lp.connect(this.ctx.destination);
+      lp.connect(comp);
+      lp.connect(delay);
+      delay.connect(wetFilter);
+      wetFilter.connect(wetGain);
+      wetGain.connect(comp);
+      comp.connect(this.ctx.destination);
 
-      this.pulse25 = createPulseWave(this.ctx, 0.25);
-      this.pulse50 = createPulseWave(this.ctx, 0.5);
-      this.pulse12 = createPulseWave(this.ctx, 0.125);
+      // Warm marimba/rhodes lead, soft electric-piano harmony, rich woody acoustic bass
+      this.warmLead = createWarmWave(this.ctx, [1.0, 0.34, 0.14, 0.05, 0.02]);
+      this.warmHarm = createWarmWave(this.ctx, [1.0, 0.22, 0.06, 0.02]);
+      this.warmBass = createWarmWave(this.ctx, [1.0, 0.32, 0.10, 0.03]);
     }
 
     setMuted(flag) {
       this.muted = !!flag;
       if (global.MarioAssets) global.MarioAssets.setMuted(this.muted);
       if (this.master && this.ctx) {
-        this.master.gain.setValueAtTime(this.muted ? 0 : 0.26, this.ctx.currentTime);
+        this.master.gain.setValueAtTime(this.muted ? 0 : 0.36, this.ctx.currentTime);
       }
     }
 
@@ -107,36 +127,52 @@
       }
     }
 
-    tone(freq, startTime, duration, type = 'pulse25', volume = 0.18, freqEnd = null, decay = false) {
+    tone(freq, startTime, duration, type = 'warmLead', volume = 0.20, freqEnd = null, decay = false) {
       if (!this.ctx || !this.master || this.muted || !freq) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
-      if (type === 'pulse25' && this.pulse25) {
-        osc.setPeriodicWave(this.pulse25);
-      } else if (type === 'pulse50' && this.pulse50) {
-        osc.setPeriodicWave(this.pulse50);
-      } else if (type === 'pulse12' && this.pulse12) {
-        osc.setPeriodicWave(this.pulse12);
+      if ((type === 'warmLead' || type === 'pulse25') && this.warmLead) {
+        osc.setPeriodicWave(this.warmLead);
+      } else if ((type === 'warmHarm' || type === 'pulse50' || type === 'pulse12') && this.warmHarm) {
+        osc.setPeriodicWave(this.warmHarm);
+      } else if ((type === 'warmBass' || type === 'triangle') && this.warmBass) {
+        osc.setPeriodicWave(this.warmBass);
       } else {
-        osc.type = (type === 'pulse25' || type === 'pulse50' || type === 'pulse12') ? 'square' : type;
+        osc.type = 'sine';
       }
       osc.frequency.setValueAtTime(freq, startTime);
       if (freqEnd !== null) {
         osc.frequency.exponentialRampToValueAtTime(Math.max(20, freqEnd), startTime + duration);
       }
+      // Smooth musical envelope (soft 8ms attack eliminates harsh digital clicks!)
       gain.gain.setValueAtTime(0.0001, startTime);
-      gain.gain.linearRampToValueAtTime(volume, startTime + 0.005);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.008);
       if (decay) {
-        // Snappy NES 2A03 hardware volume-envelope decay (warm & bouncy, not buzzy)
-        gain.gain.exponentialRampToValueAtTime(Math.max(0.0008, volume * 0.22), startTime + duration);
+        gain.gain.exponentialRampToValueAtTime(Math.max(0.0008, volume * 0.18), startTime + duration);
       } else {
-        gain.gain.setValueAtTime(volume * 0.85, Math.max(startTime + 0.007, startTime + duration - 0.015));
+        gain.gain.setValueAtTime(volume * 0.82, Math.max(startTime + 0.01, startTime + duration - 0.025));
         gain.gain.exponentialRampToValueAtTime(0.0001, startTime + duration);
       }
       osc.connect(gain);
       gain.connect(this.master);
       osc.start(startTime);
-      osc.stop(startTime + duration + 0.012);
+      osc.stop(startTime + duration + 0.018);
+    }
+
+    kick(startTime, volume = 0.24) {
+      if (!this.ctx || !this.master || this.muted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(140, startTime);
+      osc.frequency.exponentialRampToValueAtTime(46, startTime + 0.085);
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.linearRampToValueAtTime(volume, startTime + 0.004);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.10);
+      osc.connect(gain);
+      gain.connect(this.master);
+      osc.start(startTime);
+      osc.stop(startTime + 0.11);
     }
 
     noise(startTime, duration, volume = 0.18, freq = 1400) {
@@ -519,20 +555,20 @@
             const dur = stepSec * 0.86;
 
             if (leadNote && NOTE_FREQ[leadNote]) {
-              this.tone(NOTE_FREQ[leadNote], nextStepTime, dur, 'pulse25', 0.12, null, true);
+              this.tone(NOTE_FREQ[leadNote], nextStepTime, dur * 1.05, 'warmLead', 0.19, null, true);
             }
             if (harmNote && NOTE_FREQ[harmNote]) {
-              this.tone(NOTE_FREQ[harmNote], nextStepTime, dur * 0.88, 'pulse50', 0.08, null, true);
+              this.tone(NOTE_FREQ[harmNote], nextStepTime, dur * 1.0, 'warmHarm', 0.11, null, true);
             }
             if (bassNote && NOTE_FREQ[bassNote]) {
-              this.tone(NOTE_FREQ[bassNote], nextStepTime, dur * 1.12, 'triangle', 0.34, null, false);
+              this.tone(NOTE_FREQ[bassNote], nextStepTime, dur * 1.18, 'warmBass', 0.30, null, true);
             }
             if (tr.drums) {
               const beat = idx % 8;
               if (beat === 0 || beat === 4) {
-                this.noise(nextStepTime, 0.04, 0.09, 360);
+                this.kick(nextStepTime, 0.22);
               } else if (beat === 2 || beat === 6) {
-                this.noise(nextStepTime, 0.055, 0.08, 920);
+                this.noise(nextStepTime, 0.045, 0.042, 1900);
               }
             }
           }

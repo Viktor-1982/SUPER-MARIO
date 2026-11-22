@@ -66,78 +66,78 @@
     mario_fire_walk_f1: 'assets/sprites/mario_hd/mario_fire_walk_f1.png',
     mario_fire_walk_f2: 'assets/sprites/mario_hd/mario_fire_walk_f2.png',
 
-    // Enemies & NPCs
-    goomba_idle:        'assets/sprites/goomba_idle.png',
-    goomba_dead:        'assets/sprites/goomba_dead.png',
-    goomba_ug:          'assets/sprites/goomba_ug.png',
-    goomba_ug_dead:     'assets/sprites/goomba_ug_dead.png',
-    goomba_cast:        'assets/sprites/goomba_cast.png',
-    goomba_cast_dead:   'assets/sprites/goomba_cast_dead.png',
-    koopa_green:        'assets/sprites/koopa_green.png',
-    koopa_green_walk_f0:'assets/sprites/koopa_green_walk_f0.png',
-    koopa_green_walk_f1:'assets/sprites/koopa_green_walk_f1.png',
-    koopa_green_shell:  'assets/sprites/koopa_green_shell.png',
-    koopa_red:          'assets/sprites/koopa_red.png',
-    koopa_red_walk_f0:  'assets/sprites/koopa_red_walk_f0.png',
-    koopa_red_walk_f1:  'assets/sprites/koopa_red_walk_f1.png',
-    koopa_red_shell:    'assets/sprites/koopa_red_shell.png',
-    paratroopa_green:   'assets/sprites/paratroopa_green.png',
-    paratroopa_red:     'assets/sprites/paratroopa_red.png',
-    buzzy:              'assets/sprites/buzzy.png',
-    buzzy_shell:        'assets/sprites/buzzy_shell.png',
-    piranha:            'assets/sprites/piranha.png',
-    piranha_anim_f0:    'assets/sprites/piranha_anim_f0.png',
-    piranha_anim_f1:    'assets/sprites/piranha_anim_f1.png',
-    piranha_anim_f2:    'assets/sprites/piranha_anim_f2.png',
-    piranha_ug:         'assets/sprites/piranha_ug.png',
-    hammer_bro:         'assets/sprites/hammer_bro.png',
-    lakitu:             'assets/sprites/lakitu.png',
-    spiny:              'assets/sprites/spiny.png',
-    spiny_egg:          'assets/sprites/spiny_egg.png',
-    bullet_bill:        'assets/sprites/bullet_bill.png',
-    blooper:            'assets/sprites/blooper.png',
-    cheep_red:          'assets/sprites/cheep_red.png',
-    cheep_gray:         'assets/sprites/cheep_gray.png',
-    podoboo:            'assets/sprites/podoboo.png',
-    bowser:             'assets/sprites/bowser.png',
-    bowser_walk_f0:     'assets/sprites/bowser_walk_f0.png',
-    bowser_walk_f1:     'assets/sprites/bowser_walk_f1.png',
-    bowser_flame:       'assets/sprites/bowser_flame.png',
-    toad:               'assets/sprites/toad.png',
-    peach:              'assets/sprites/peach.png',
+    // Enemies & NPCs (Scale4x crisp original 1985 NES sprites!)
+    goomba_idle:        'assets/sprites/hd/goomba_idle.png',
+    goomba_dead:        'assets/sprites/hd/goomba_dead.png',
+    goomba_ug:          'assets/sprites/hd/goomba_ug.png',
+    goomba_ug_dead:     'assets/sprites/hd/goomba_ug_dead.png',
+    goomba_cast:        'assets/sprites/hd/goomba_cast.png',
+    goomba_cast_dead:   'assets/sprites/hd/goomba_cast_dead.png',
+    koopa_green:        'assets/sprites/hd/koopa_green.png',
+    koopa_green_walk_f0:'assets/sprites/hd/koopa_green_walk_f0.png',
+    koopa_green_walk_f1:'assets/sprites/hd/koopa_green_walk_f1.png',
+    koopa_green_shell:  'assets/sprites/hd/koopa_green_shell.png',
+    koopa_red:          'assets/sprites/hd/koopa_red.png',
+    koopa_red_walk_f0:  'assets/sprites/hd/koopa_red_walk_f0.png',
+    koopa_red_walk_f1:  'assets/sprites/hd/koopa_red_walk_f1.png',
+    koopa_red_shell:    'assets/sprites/hd/koopa_red_shell.png',
+    paratroopa_green:   'assets/sprites/hd/paratroopa_green.png',
+    paratroopa_red:     'assets/sprites/hd/paratroopa_red.png',
+    buzzy:              'assets/sprites/hd/buzzy.png',
+    buzzy_shell:        'assets/sprites/hd/buzzy_shell.png',
+    piranha:            'assets/sprites/hd/piranha.png',
+    piranha_anim_f0:    'assets/sprites/hd/piranha_anim_f0.png',
+    piranha_anim_f1:    'assets/sprites/hd/piranha_anim_f1.png',
+    piranha_anim_f2:    'assets/sprites/hd/piranha_anim_f2.png',
+    piranha_ug:         'assets/sprites/hd/piranha_ug.png',
+    hammer_bro:         'assets/sprites/hd/hammer_bro.png',
+    lakitu:             'assets/sprites/hd/lakitu.png',
+    spiny:              'assets/sprites/hd/spiny.png',
+    spiny_egg:          'assets/sprites/hd/spiny_egg.png',
+    bullet_bill:        'assets/sprites/hd/bullet_bill.png',
+    blooper:            'assets/sprites/hd/blooper.png',
+    cheep_red:          'assets/sprites/hd/cheep_red.png',
+    cheep_gray:         'assets/sprites/hd/cheep_gray.png',
+    podoboo:            'assets/sprites/hd/podoboo.png',
+    bowser:             'assets/sprites/hd/bowser.png',
+    bowser_walk_f0:     'assets/sprites/hd/bowser_walk_f0.png',
+    bowser_walk_f1:     'assets/sprites/hd/bowser_walk_f1.png',
+    bowser_flame:       'assets/sprites/hd/bowser_flame.png',
+    toad:               'assets/sprites/hd/toad.png',
+    peach:              'assets/sprites/hd/peach.png',
 
-    // Items
-    mushroom:           'assets/sprites/mushroom.png',
-    oneup:              'assets/sprites/oneup.png',
-    fire_flower:        'assets/sprites/fire_flower.png',
-    starman:            'assets/sprites/starman.png',
-    coin:               'assets/sprites/coin.png',
-    coin_ow_f0:         'assets/sprites/coin_ow_f0.png',
-    coin_ow_f1:         'assets/sprites/coin_ow_f1.png',
-    coin_ow_f2:         'assets/sprites/coin_ow_f2.png',
-    coin_ow_f3:         'assets/sprites/coin_ow_f3.png',
-    coin_ug_f0:         'assets/sprites/coin_ug_f0.png',
-    coin_ug_f1:         'assets/sprites/coin_ug_f1.png',
-    coin_ug_f2:         'assets/sprites/coin_ug_f2.png',
-    coin_ug_f3:         'assets/sprites/coin_ug_f3.png',
+    // Items (Scale4x crisp!)
+    mushroom:           'assets/sprites/hd/mushroom.png',
+    oneup:              'assets/sprites/hd/oneup.png',
+    fire_flower:        'assets/sprites/hd/fire_flower.png',
+    starman:            'assets/sprites/hd/starman.png',
+    coin:               'assets/sprites/hd/coin.png',
+    coin_ow_f0:         'assets/sprites/hd/coin_ow_f0.png',
+    coin_ow_f1:         'assets/sprites/hd/coin_ow_f1.png',
+    coin_ow_f2:         'assets/sprites/hd/coin_ow_f2.png',
+    coin_ow_f3:         'assets/sprites/hd/coin_ow_f3.png',
+    coin_ug_f0:         'assets/sprites/hd/coin_ug_f0.png',
+    coin_ug_f1:         'assets/sprites/hd/coin_ug_f1.png',
+    coin_ug_f2:         'assets/sprites/hd/coin_ug_f2.png',
+    coin_ug_f3:         'assets/sprites/hd/coin_ug_f3.png',
 
-    // Tiles & Title Logo
-    logo:               'assets/sprites/logo.png',
-    ground_overworld:   'assets/sprites/ground_overworld.png',
-    ground_underground: 'assets/sprites/ground_underground.png',
-    ground_underwater:  'assets/sprites/ground_underwater.png',
-    ground_castle:      'assets/sprites/ground_castle.png',
-    brick_overworld:    'assets/sprites/brick_overworld.png',
-    brick_underground:  'assets/sprites/brick_underground.png',
-    brick_castle:       'assets/sprites/brick_castle.png',
-    qblock_overworld:   'assets/sprites/qblock_overworld.png',
-    qblock_underground: 'assets/sprites/qblock_underground.png',
-    qblock_castle:      'assets/sprites/qblock_castle.png',
-    empty_block:        'assets/sprites/empty_block.png',
-    hard_overworld:     'assets/sprites/hard_overworld.png',
-    hard_underground:   'assets/sprites/hard_underground.png',
-    axe:                'assets/sprites/axe.png',
-    fortress_flag:      'assets/sprites/fortress_flag.png'
+    // Tiles & Title Logo (Scale4x smooth crisp!)
+    logo:               'assets/sprites/hd/logo.png',
+    ground_overworld:   'assets/sprites/hd/ground_overworld.png',
+    ground_underground: 'assets/sprites/hd/ground_underground.png',
+    ground_underwater:  'assets/sprites/hd/ground_underwater.png',
+    ground_castle:      'assets/sprites/hd/ground_castle.png',
+    brick_overworld:    'assets/sprites/hd/brick_overworld.png',
+    brick_underground:  'assets/sprites/hd/brick_underground.png',
+    brick_castle:       'assets/sprites/hd/brick_castle.png',
+    qblock_overworld:   'assets/sprites/hd/qblock_overworld.png',
+    qblock_underground: 'assets/sprites/hd/qblock_underground.png',
+    qblock_castle:      'assets/sprites/hd/qblock_castle.png',
+    empty_block:        'assets/sprites/hd/empty_block.png',
+    hard_overworld:     'assets/sprites/hd/hard_overworld.png',
+    hard_underground:   'assets/sprites/hd/hard_underground.png',
+    axe:                'assets/sprites/hd/axe.png',
+    fortress_flag:      'assets/sprites/hd/fortress_flag.png'
   };
 
   class AssetManager {
@@ -153,8 +153,12 @@
       // Load external PNG sprites (works on HTTP and local file://)
       for (const [key, src] of Object.entries(SPRITE_FILES)) {
         const img = new Image();
+        const isHd = src.includes('/hd/') || src.includes('/mario_hd/');
         img.onload = () => {
-          if (img.naturalWidth > 0) this.sprites[key] = img;
+          if (img.naturalWidth > 0) {
+            if (isHd) img._hdScale = 4;
+            this.sprites[key] = img;
+          }
         };
         img.onerror = () => {};
         img.src = src;
@@ -177,7 +181,7 @@
       for (const [key, fileBase] of Object.entries(starBases)) {
         for (const s of ['s1', 's2', 's3']) {
           const img = new Image();
-          img.onload = () => { if (img.naturalWidth > 0) this.sprites[key + '_' + s] = img; };
+          img.onload = () => { if (img.naturalWidth > 0) { img._hdScale = 4; this.sprites[key + '_' + s] = img; } };
           img.onerror = () => {};
           img.src = `assets/sprites/mario_hd/${fileBase}_${s}.png`;
         }
