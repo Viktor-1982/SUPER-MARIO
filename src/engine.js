@@ -7,7 +7,7 @@
   const TILE = 16;
   const SCREEN_H = 240;
 
-  const SOLID_TILES = new Set(['#', 'B', '?', 'P', 'p', 'M', 'S', 'b', 'U', 'H', '[', ']', '{', '}', '<', ',', '-', '_', '=', 'T', 'O', 'K', 'k', 'X']);
+  const SOLID_TILES = new Set(['#', 'B', '?', 'P', 'p', 'M', 'S', 'V', 'b', 'U', 'H', '[', ']', '{', '}', '<', ',', '-', '_', '=', 'T', 't', 'O', 'K', 'k', 'X']);
 
   class GameEngine {
     constructor(canvas) {
@@ -51,6 +51,7 @@
       this.platforms = [];
       this.springs = [];
       this.powerUps = [];
+      this.vines = [];
       this.fireballs = [];
       this.hammers = [];
       this.particles = [];
@@ -60,6 +61,7 @@
 
       this.introTimer = 0;
       this.stateTimer = 0;
+      this.pipeIntro = null;
       this.pipeAnim = null;
       this.flagAnim = null;
       this.bridgeAnim = null;
@@ -122,8 +124,10 @@
       this.savedMainState = null;
       this.flagAnim = null;
       this.bridgeAnim = null;
+      this.pipeIntro = null;
       this.pipeAnim = null;
       this.barrageTimer = 0;
+      this.cheepTimer = 55;
       this.toadMessageTimer = 0;
       global.MarioAudio.setPaused(false);
       global.MarioAudio.stopMusic();
@@ -151,8 +155,10 @@
       this.respawnAt = null;
       this.flagAnim = null;
       this.bridgeAnim = null;
+      this.pipeIntro = null;
       this.pipeAnim = null;
       this.barrageTimer = 0;
+      this.cheepTimer = 55;
       this.toadMessageTimer = 0;
       this.input.jumpPressed = false;
       this.input.firePressed = false;
@@ -174,6 +180,9 @@
       this.player = new E.Player(spawn.x, spawn.y, powerState);
       if (isTitleBackdrop) {
         this.player.onGround = true;
+      } else if (!lv.isBonus && !lv.isCloud) {
+        // 3 seconds (180 frames) of spawn/respawn protection on main stages (skip coin bonus rooms!)
+        this.player.invulnTimer = 180;
       }
       if (respawn) {
         this.player.onGround = true;
@@ -186,6 +195,7 @@
       this.platforms = [];
       this.springs = [];
       this.powerUps = [];
+      this.vines = [];
       this.fireballs = [];
       this.hammers = [];
       this.particles = [];
@@ -205,8 +215,26 @@
         else if (e.type === 'piranha') this.enemies.push(new E.PiranhaPlant(e.col, e.row));
         else if (e.type === 'bowser') this.enemies.push(new E.Bowser(e.col * TILE, e.row * TILE, e.worldNum || lv.worldNum || 1));
       }
+      // On midpoint respawn, keep the immediate 80px landing zone clear of non-boss enemies
+      if (respawn) {
+        this.enemies = this.enemies.filter(en => en.type === 'bowser' || en.type === 'piranha' || Math.abs(en.x - spawn.x) > 80);
+      }
 
       for (const p of (lv.platforms || [])) this.platforms.push(new E.MovingPlatform(p));
+      // Link authentic NES Pulley / Balance Platform pairs (3-3, 4-3, 6-3)
+      const pulleyMap = new Map();
+      for (const plat of this.platforms) {
+        if (!plat.pulleyId) continue;
+        if (pulleyMap.has(plat.pulleyId)) {
+          const other = pulleyMap.get(plat.pulleyId);
+          other.partner = plat;
+          plat.partner = other;
+        } else {
+          pulleyMap.set(plat.pulleyId, plat);
+        }
+      }
+      // Reset Castle Maze checkpoint progress
+      this.mazeState = (lv.mazeLoops || []).map(() => ({ stepIdx: 0 }));
       for (const sp of (lv.springs || [])) this.springs.push(new E.Springboard(sp.col * TILE, sp.row * TILE));
 
       if (lv.podoboos) {
@@ -358,7 +386,7 @@
 
     hitBlock(col, row) {
       const ch = this.getTile(col, row);
-      if (ch === 'U' || ch === '#' || ch === 'H' || ch === '[' || ch === ']' || ch === '<' || ch === ',' || ch === '-' || ch === '_' || ch === '=' || ch === 'K' || ch === 'k' || ch === 'X' || ch === 'T' || ch === 'O') {
+      if (ch === 'U' || ch === '#' || ch === 'H' || ch === '[' || ch === ']' || ch === '<' || ch === ',' || ch === '-' || ch === '_' || ch === '=' || ch === 'K' || ch === 'k' || ch === 'X' || ch === 'T' || ch === 't' || ch === 'O') {
         global.MarioAudio.playSfx('bump');
         return;
       }
@@ -407,8 +435,20 @@
         this.setTile(col, row, 'U');
         this.powerUps.push(new global.MarioEntities.PowerUp(col * TILE, row * TILE, 'star'));
         global.MarioAudio.playSfx('powerupAppear');
+      } else if (ch === 'V') {
+        // Authentic 1985 NES Climbable Vine / Beanstalk (2-1, 3-1, 4-2 Warp Zone 6-7-8, 5-2, 6-2)!
+        this.setTile(col, row, 'U');
+        this.vines.push({
+          x: col * TILE + 8,
+          baseY: row * TILE,
+          topY: row * TILE,
+          targetTopY: 0,
+          targetLevel: this.level.vineTarget || null,
+          returnCol: this.level.vineReturnCol || (col + 40)
+        });
+        global.MarioAudio.playSfx('powerupAppear');
       } else if (ch === 'M') {
-        let rem = this.multiCoinCounts.has(key) ? this.multiCoinCounts.get(key) : 7;
+        let rem = this.multiCoinCounts.has(key) ? this.multiCoinCounts.get(key) : 10;
         this.spawnCoinPop(col * TILE, row * TILE - 14);
         this.addCoin(col * TILE, row * TILE - 16);
         rem--;
@@ -500,7 +540,7 @@
 
     hurtPlayer() {
       const p = this.player;
-      if (p.dead || p.invulnTimer > 0 || p.starTimer > 0) return;
+      if (p.dead || p.invulnTimer > 0 || p.pipeSafeTimer > 0 || p.starTimer > 0 || this.state === 'pipe') return;
       if (p.powerState !== 'small') {
         p.setPower('small');
         p.invulnTimer = 110;
@@ -535,8 +575,15 @@
       } else if (this.state === 'intro') {
         this.introTimer--;
         if (this.introTimer <= 0) {
-          this.loadLevel(this.pendingLevelId, this.pendingPowerState, false);
+          const isPipeStart = !this.respawnAt && (this.pendingLevelId === '1-2' || this.pendingLevelId === '2-2' || this.pendingLevelId === '4-2' || this.pendingLevelId === '7-2');
+          if (isPipeStart) {
+            this.startOutdoorPipeIntro(this.pendingLevelId, this.pendingPowerState);
+          } else {
+            this.loadLevel(this.pendingLevelId, this.pendingPowerState, false);
+          }
         }
+      } else if (this.state === 'pipeIntro') {
+        this.updateOutdoorPipeIntro();
       } else if (this.state === 'playing') {
         this.updatePlaying();
       } else if (this.state === 'pipe') {
@@ -605,6 +652,8 @@
       }
 
       if (p.invulnTimer > 0) p.invulnTimer--;
+      if (p.pipeSafeTimer > 0) p.pipeSafeTimer--;
+      if (p.springBoostTimer > 0) p.springBoostTimer--;
       if (p.stompGrace > 0) p.stompGrace--;
       if (p.fireCooldown > 0) p.fireCooldown--;
       if (p.fireAnimTimer > 0) p.fireAnimTimer--;
@@ -615,7 +664,7 @@
         }
       }
 
-      for (const plat of this.platforms) plat.update(p.ridingPlatform === plat);
+      for (const plat of this.platforms) plat.update(p.ridingPlatform === plat, this);
       for (const sp of this.springs) sp.update();
 
       // Authentic NES Bullet Bill random barrage (Worlds 5-3 & 6-3)
@@ -629,23 +678,120 @@
         }
       }
 
-      // Player Physics (Normal vs Underwater)
-      if (this.level.isUnderwater) this.updateUnderwaterPhysics();
-      else this.updatePlayerPhysics();
+      // Authentic NES Flying Cheep-Cheep Bridge Spawner (Worlds 2-3 & 7-3: high graceful arcs, running right clears them!)
+      if (this.level.cheepBarrage && this.level.flagpoleCol && p.x > 18 * TILE && p.x < (this.level.flagpoleCol - 28) * TILE) {
+        this.cheepTimer = (this.cheepTimer === undefined ? 65 : this.cheepTimer) - 1;
+        if (this.cheepTimer <= 0) {
+          const isWorld7 = this.level.worldNum >= 7;
+          const maxActive = isWorld7 ? 3 : 2;
+          const activeLeapers = this.enemies.filter(e => e.type === 'cheep' && e.leaping && !e.dead).length;
+          if (activeLeapers < maxActive) {
+            // Authentic 1985 NES: when Mario keeps running right, Cheep-Cheeps launch from behind/below arcing high forward!
+            const movingRight = p.vx > 0.7;
+            let spawnX, vx;
+            if (movingRight) {
+              spawnX = Math.max(this.cameraX + 12, p.x - 88 + Math.random() * 52);
+              vx = 0.95 + Math.random() * 0.5;
+            } else {
+              const fromRight = Math.random() < 0.5;
+              spawnX = fromRight
+                ? Math.min(this.cameraX + this.screenW - 16, p.x + 56 + Math.random() * 56)
+                : Math.max(this.cameraX + 12, p.x - 96 + Math.random() * 44);
+              vx = fromRight ? -(0.45 + Math.random() * 0.35) : (0.75 + Math.random() * 0.45);
+            }
+            const fish = new global.MarioEntities.CheepCheep(spawnX, 248, false, true);
+            fish.active = true;
+            fish.vx = vx;
+            // High graceful NES arc peaking near top of screen (y ~ 32..62, well above bridge!)
+            fish.vy = -(6.65 + Math.random() * 0.65);
+            this.enemies.push(fish);
+          }
+          this.cheepTimer = isWorld7 ? (58 + Math.floor(Math.random() * 36)) : (76 + Math.floor(Math.random() * 44));
+        }
+      }
+
+      // Grow & climb authentic NES Vines (2-1, 3-1, 4-2 Warp Zone 6-7-8, 5-2, 6-2)
+      for (const v of this.vines) {
+        if (v.topY > v.targetTopY) v.topY = Math.max(v.targetTopY, v.topY - 1.4);
+      }
+      if (p.climbingVine) {
+        const v = p.climbingVine;
+        p.vx = 0; p.vy = 0; p.onGround = false;
+        p.x = v.x - p.w / 2;
+        if (this.input.up) { p.y -= 1.35; p.animFrame += 0.16; }
+        else if (this.input.down) { p.y = Math.min(v.baseY - p.h, p.y + 1.35); p.animFrame += 0.16; }
+        if (this.input.jumpPressed && !this.input.up) {
+          p.climbingVine = null;
+          p.vy = -3.6;
+        } else if (this.input.left && !this.input.up) {
+          p.climbingVine = null; p.x -= 6;
+        } else if (this.input.right && !this.input.up) {
+          p.climbingVine = null; p.x += 6;
+        } else if (p.y <= 14 && v.targetLevel) {
+          // Reached the top of the Vine -> Warp into Cloud Heaven / 4-2 Warp Zone (8-7-6)!
+          const power = p.powerState;
+          const savedTime = this.time;
+          this.savedMainState = {
+            level: this.level, enemies: this.enemies, platforms: this.platforms,
+            springs: this.springs, powerUps: this.powerUps, time: this.time,
+            exitX: v.returnCol * TILE, exitY: 2 * TILE
+          };
+          p.climbingVine = null;
+          this.loadLevel(v.targetLevel, power, false);
+          this.time = savedTime;
+          return;
+        }
+      } else {
+        // Latch onto a vine when holding Up while overlapping it!
+        if (this.input.up && this.vines.length) {
+          const pMidX = p.x + p.w / 2;
+          for (const v of this.vines) {
+            if (Math.abs(pMidX - v.x) <= 10 && p.y + p.h > v.topY && p.y < v.baseY) {
+              p.climbingVine = v;
+              p.vx = 0; p.vy = 0;
+              break;
+            }
+          }
+        }
+        // Player Physics (Normal vs Underwater)
+        if (this.level.isUnderwater) this.updateUnderwaterPhysics();
+        else this.updatePlayerPhysics();
+      }
 
       this.collectWorldCoins();
       this.checkWarpPipes();
 
       const pBox = p.getHitbox();
 
-      // Check Springboards
+      // Check Springboards (Authentic NES compression window + forgiving super bounce!)
       for (const sp of this.springs) {
-        if (p.vy >= 0 && global.MarioEntities.aabb(pBox, sp)) {
-          sp.compress = 7;
-          p.y = sp.y - p.h;
-          p.vy = this.input.jump ? -8.6 : -6.8;
+        if (sp.launchTimer > 0) {
+          if (this.input.jump || this.input.jumpPressed) sp.boostHeld = true;
+          sp.launchTimer--;
+          sp.compress = sp.launchTimer > 3 ? 12 : 7;
+          p.y = (sp.y + sp.compress) - p.h;
+          p.vy = 0;
           p.onGround = false;
-          global.MarioAudio.playSfx('spring');
+          if (sp.launchTimer <= 0) {
+            sp.compress = 2;
+            const superBounce = sp.boostHeld || this.input.jump;
+            p.vy = superBounce ? -8.8 : -6.2;
+            p.springBoostTimer = superBounce ? 38 : 22;
+            p.jumpTier = 0;
+            global.MarioAudio.playSfx('spring');
+          }
+          continue;
+        }
+        const spTop = sp.y + sp.compress;
+        const spBox = { x: sp.x + 1, y: spTop, w: sp.w - 2, h: sp.baseY - spTop };
+        if (p.vy >= 0 && global.MarioEntities.aabb(pBox, spBox)) {
+          sp.launchTimer = 7;
+          sp.compress = 10;
+          sp.boostHeld = !!(this.input.jump || this.input.jumpPressed);
+          p.y = (sp.y + sp.compress) - p.h;
+          p.vy = 0;
+          p.onGround = false;
+          p.coyoteTimer = 0;
         }
       }
 
@@ -654,17 +800,60 @@
       const midCol = Math.floor((pBox.x + pBox.w / 2) / TILE);
       if (this.getTile(midCol, footRow) === 'L') { this.killPlayer(); return; }
 
-      if (p.y > SCREEN_H + 16) { this.killPlayer(); return; }
+      if (p.y > SCREEN_H + 16) {
+        // Dropping off the bottom of a Cloud Heaven returns Mario safely from the sky into the main level!
+        if (this.level.isCloud && this.savedMainState) {
+          const s = this.savedMainState;
+          const power = p.powerState;
+          const savedTime = this.time;
+          this.level = s.level;
+          this.enemies = s.enemies;
+          this.platforms = s.platforms;
+          this.springs = s.springs || [];
+          this.powerUps = s.powerUps;
+          this.vines = [];
+          this.fireballs = [];
+          this.hammers = [];
+          this.particles = [];
+          this.time = savedTime;
+          this.player = new global.MarioEntities.Player(s.exitX, 16, power);
+          this.player.pipeSafeTimer = 60;
+          this.savedMainState = null;
+          this.cameraX = Math.max(0, Math.min(Math.max(0, this.level.cols * TILE - this.screenW), this.player.x - this.screenW * 0.35));
+          global.MarioAudio.playMusic(this.level.music, this.hurryPlayed ? 1.32 : 1.0);
+          return;
+        }
+        this.killPlayer();
+        return;
+      }
 
-      // Authentic NES Castle Maze loop checks (Worlds 4-4, 7-4, 8-4)
+      // Authentic NES Castle Maze checkpoint-sequence checks (Worlds 4-4, 7-4, 8-4)
       if (this.level.mazeLoops && !p.dead) {
-        for (const mz of this.level.mazeLoops) {
-          if (p.x >= mz.checkCol * TILE && p.x < (mz.checkCol + 1) * TILE) {
-            const pMidY = p.y + p.h / 2;
-            if (pMidY < mz.validMinY || pMidY > mz.validMaxY) {
+        if (!this.mazeState || this.mazeState.length !== this.level.mazeLoops.length) {
+          this.mazeState = this.level.mazeLoops.map(() => ({ stepIdx: 0 }));
+        }
+        const pCol = Math.floor((p.x + p.w / 2) / TILE);
+        const pMidY = p.y + p.h / 2;
+        for (let i = 0; i < this.level.mazeLoops.length; i++) {
+          const mz = this.level.mazeLoops[i];
+          const st = this.mazeState[i];
+          if (mz.steps && st.stepIdx < mz.steps.length) {
+            const cur = mz.steps[st.stepIdx];
+            if (pCol >= cur.c1 && pCol <= cur.c2 && pMidY >= cur.minY && pMidY <= cur.maxY) {
+              st.stepIdx++;
+            }
+          }
+          if (p.x >= mz.checkCol * TILE && p.x < (mz.checkCol + 1.5) * TILE) {
+            const passed = !mz.alwaysLoop && mz.steps && st.stepIdx >= mz.steps.length;
+            if (!passed) {
               const shift = (mz.checkCol - mz.loopBackCol) * TILE;
-              p.x -= shift;
+              p.x = mz.loopBackCol * TILE + 4;
+              if (mz.safeY !== undefined) {
+                p.y = mz.safeY - p.h;
+                p.vy = 0;
+              }
               this.cameraX = Math.max(0, this.cameraX - shift);
+              st.stepIdx = 0;
               break;
             }
           }
@@ -800,7 +989,14 @@
       let stompedThisFrame = false;
 
       for (const e of this.enemies) {
-        if (!e.active && e.x < this.cameraX + this.screenW + 44) e.active = true;
+        if (!e.active && e.x < this.cameraX + this.screenW + 44) {
+          // Authentic 1985 NES: only one Lakitu chases Mario at a time (later Lakitus only activate if previous was defeated!)
+          if (e.type === 'lakitu' && this.enemies.some(o => o !== e && o.type === 'lakitu' && o.active && !o.dead && !o.flipped)) {
+            e.remove = true;
+            continue;
+          }
+          e.active = true;
+        }
         if (!e.active) continue;
         e.update(this);
 
@@ -982,7 +1178,7 @@
 
       // Exact 1985 NES Super Mario Bros. Disassembly Physics (JDaster64 / 6502 ROM values, 1px = 256 subpixels)
       const WALK_MAX = 1.5;              // $01800
-      const RUN_MAX = 2.75;              // $02C00
+      const RUN_MAX = 2.5625;            // $02900 — exact 1985 NES sprint cap!
       const WALK_ACCEL = 10 / 256;       // $00098 (~0.0391 px/f^2)
       const RUN_ACCEL = 19 / 256;        // $000E4-$00130 (~0.0742 px/f^2)
       const RELEASE_DECEL = 10 / 256;    // $000A0 (~0.0391 px/f^2 — classic NES coasting slide)
@@ -1075,11 +1271,13 @@
         }
       }
 
-      // Exact 3-tier NES SMB1 Holding & Falling Gravity + 4.0 px/f Terminal Velocity
+      // Exact 3-tier NES SMB1 Holding & Falling Gravity + smooth Springboard arc + 4.0 px/f Terminal Velocity
       const HOLD_GRAV = [0.125, 0.1171875, 0.15625];
       const FALL_GRAV = [0.4375, 0.375, 0.5625];
       const tier = p.jumpTier || 0;
-      const grav = (p.vy < 0 && inp.jump) ? HOLD_GRAV[tier] : FALL_GRAV[tier];
+      const grav = (p.vy < 0 && p.springBoostTimer > 0)
+        ? 0.21
+        : ((p.vy < 0 && inp.jump) ? HOLD_GRAV[tier] : FALL_GRAV[tier]);
       p.vy = Math.min(4.0, p.vy + grav);
 
       this.resolvePlayerTileMovement();
@@ -1110,15 +1308,37 @@
       if (p.vx > 0) {
         const rightCol = Math.floor((hb.x + hb.w) / TILE);
         for (let r = topRow; r <= botRow; r++) {
-          if (this.isSolidTile(rightCol, r)) { p.x = rightCol * TILE - hb.w; p.vx = 0; break; }
+          if (this.isSolidTile(rightCol, r)) {
+            // Authentic 1985 NES: sprinting across a 1-tile pit smoothly steps onto the far edge!
+            if (r === botRow && Math.abs(p.vx) >= 1.8 && p.vy >= 0 && p.vy < 1.8 &&
+                !this.isSolidTile(rightCol, r - 1) && (hb.y + hb.h) - r * TILE <= 4.5 &&
+                (p.h <= 16 || !this.isSolidTile(rightCol, r - 2))) {
+              p.y = r * TILE - p.h;
+              p.vy = 0;
+              p.onGround = true;
+              break;
+            }
+            p.x = rightCol * TILE - hb.w; p.vx = 0; break;
+          }
         }
       } else if (p.vx < 0) {
         const leftCol = Math.floor(hb.x / TILE);
         for (let r = topRow; r <= botRow; r++) {
-          if (this.isSolidTile(leftCol, r)) { p.x = (leftCol + 1) * TILE; p.vx = 0; break; }
+          if (this.isSolidTile(leftCol, r)) {
+            if (r === botRow && Math.abs(p.vx) >= 1.8 && p.vy >= 0 && p.vy < 1.8 &&
+                !this.isSolidTile(leftCol, r - 1) && (hb.y + hb.h) - r * TILE <= 4.5 &&
+                (p.h <= 16 || !this.isSolidTile(leftCol, r - 2))) {
+              p.y = r * TILE - p.h;
+              p.vy = 0;
+              p.onGround = true;
+              break;
+            }
+            p.x = (leftCol + 1) * TILE; p.vx = 0; break;
+          }
         }
       }
 
+      const prevTop = hb.y;
       const prevBottom = hb.y + hb.h;
       p.y += p.vy;
       p.onGround = false;
@@ -1150,7 +1370,9 @@
         const hitCols = [];
         for (let c = leftCol; c <= rightCol; c++) {
           const tile = this.getTile(c, topRow2);
-          if (this.isSolidTile(c, topRow2) || tile === '1' || tile === 'h') hitCols.push(c);
+          // Authentic 1985 NES: hidden blocks ('1', 'h') ONLY materialize when head genuinely crosses from BELOW!
+          const isHiddenHit = (tile === '1' || tile === 'h') && prevTop >= (topRow2 + 1) * TILE - 6;
+          if (this.isSolidTile(c, topRow2) || isHiddenHit) hitCols.push(c);
         }
         if (hitCols.length > 0) {
           const centerX = hb2.x + hb2.w / 2;
@@ -1247,6 +1469,7 @@
               springs: this.springs, powerUps: this.powerUps, time: this.time,
               exitX: wp.exitX, exitY: wp.exitY
             };
+            this.hidePiranhasNear(p.x);
             this.state = 'pipe';
             this.pipeAnim = { mode: 'enterBonus', timer: 36, target: wp.target };
             global.MarioAudio.playSfx('pipe');
@@ -1268,6 +1491,16 @@
       }
     }
 
+    hidePiranhasNear(xPx) {
+      for (const e of this.enemies) {
+        if (e.type === 'piranha' && Math.abs(e.x - xPx) < 48) {
+          e.phase = 'hidden';
+          e.y = e.baseY + 2;
+          e.timer = 110;
+        }
+      }
+    }
+
     updatePipeAnim() {
       const p = this.player;
       this.pipeAnim.timer--;
@@ -1281,6 +1514,8 @@
           p.x = this.pipeAnim.destX;
           p.y = this.pipeAnim.destY - p.h + 16;
           p.vx = 0; p.vy = 0;
+          p.pipeSafeTimer = 60;
+          this.hidePiranhasNear(p.x);
           this.cameraX = Math.max(0, Math.min(Math.max(0, this.level.cols * TILE - this.screenW), p.x - this.screenW * 0.35));
           this.pipeAnim = { mode: 'emerge', timer: 24, targetY: this.pipeAnim.destY - p.h };
           global.MarioAudio.playSfx('pipe');
@@ -1304,6 +1539,8 @@
           this.loadLevel(this.pipeAnim.target, power, false);
           this.time = savedTime;
           this.player.y = (this.level.spawnPipeRow * TILE) - this.player.h + 16;
+          this.player.pipeSafeTimer = 60;
+          this.hidePiranhasNear(this.player.x);
           this.state = 'pipe';
           this.pipeAnim = { mode: 'emerge', timer: 24, targetY: (this.level.spawnPipeRow * TILE) - this.player.h };
           global.MarioAudio.playSfx('pipe');
@@ -1315,6 +1552,7 @@
           const savedTime = this.time;
           this.loadLevel(this.pipeAnim.target, power, false);
           this.time = savedTime;
+          this.player.pipeSafeTimer = 45;
         }
       } else if (this.pipeAnim.mode === 'exitBonus') {
         stepPipeMove();
@@ -1332,6 +1570,8 @@
             this.particles = [];
             this.player = new global.MarioEntities.Player(s.exitX, s.exitY - 16, power);
             this.player.y = s.exitY - this.player.h + 16;
+            this.player.pipeSafeTimer = 60;
+            this.hidePiranhasNear(this.player.x);
             const maxCam = Math.max(0, this.level.cols * TILE - this.screenW);
             this.cameraX = Math.max(0, Math.min(maxCam, s.exitX - 100));
             this.savedMainState = null;
@@ -1345,7 +1585,11 @@
         }
       } else if (this.pipeAnim.mode === 'emerge') {
         p.y = Math.max(this.pipeAnim.targetY, p.y - 0.8);
-        if (this.pipeAnim.timer <= 0) this.state = 'playing';
+        if (this.pipeAnim.timer <= 0) {
+          this.hidePiranhasNear(p.x);
+          p.pipeSafeTimer = 60;
+          this.state = 'playing';
+        }
       }
     }
 
@@ -1387,17 +1631,50 @@
 
       if (fa.phase === 'slide') {
         const groundY = 12 * TILE - p.h;
+        p.vx = 0;
+        p.facing = 1;
+        p.onGround = false;
         if (p.y < groundY) p.y = Math.min(groundY, p.y + 2.2);
         if (fa.flagY < 11 * TILE) fa.flagY = Math.min(11 * TILE, fa.flagY + 2.2);
         // Authentic 1985 NES: flagpole score rises UP on the right side as flag slides DOWN!
         if (fa.bonusY > 3 * TILE + 6) fa.bonusY = Math.max(3 * TILE + 6, fa.bonusY - 2.2);
         if (p.y >= groundY && fa.flagY >= 11 * TILE) {
-          fa.phase = 'walk';
+          fa.phase = 'turn';
+          fa.timer = 14;
+          p.x = this.level.flagpoleCol * TILE + 10;
+          p.facing = -1;
           global.MarioAudio.playSfx('stageClear');
         }
+      } else if (fa.phase === 'turn') {
+        p.vx = 0;
+        p.facing = -1;
+        p.onGround = false;
+        fa.timer--;
+        if (fa.timer <= 0) {
+          fa.phase = 'walk';
+          p.facing = 1;
+          p.vy = -1.6;
+        }
       } else if (fa.phase === 'walk') {
-        p.x += 1.2; p.y = 13 * TILE - p.h; p.facing = 1; p.onGround = true; p.animFrame += 0.18;
-        if (p.x >= fa.castleX) { fa.phase = 'tally'; fa.timer = 115; }
+        const floorY = 13 * TILE - p.h;
+        p.vx = 1.45;
+        p.x += p.vx;
+        p.facing = 1;
+        if (p.y < floorY) {
+          p.vy = Math.min(4.0, (p.vy || 0) + 0.28);
+          p.y = Math.min(floorY, p.y + p.vy);
+          p.onGround = (p.y >= floorY);
+        } else {
+          p.y = floorY;
+          p.vy = 0;
+          p.onGround = true;
+          p.animFrame += 0.22;
+        }
+        if (p.x >= fa.castleX) {
+          p.vx = 0;
+          fa.phase = 'tally';
+          fa.timer = 115;
+        }
       } else if (fa.phase === 'tally') {
         fa.flagRise = Math.min(16, (fa.flagRise || 0) + 0.5);
         if (this.time > 0) {
@@ -1483,7 +1760,8 @@
       const targetX = this.level.toadPos.x - 28;
       const floorY = 13 * TILE - p.h;
       if (p.x < targetX) {
-        p.x += 1.2;
+        p.vx = 1.35;
+        p.x += p.vx;
         if (p.y < floorY) {
           p.vy = Math.min(4.0, (p.vy || 0) + 0.28);
           p.y = Math.min(floorY, p.y + p.vy);
@@ -1491,7 +1769,7 @@
           p.y = floorY;
           p.vy = 0;
         }
-        p.facing = 1; p.onGround = (p.y >= floorY); p.animFrame += 0.16;
+        p.facing = 1; p.onGround = (p.y >= floorY); p.animFrame += 0.2;
         const maxCam = Math.max(0, this.level.cols * TILE - this.screenW);
         this.cameraX = Math.min(maxCam, Math.max(this.cameraX, p.x - 100));
       } else {
@@ -1508,6 +1786,86 @@
           }
         }
       }
+    }
+
+    startOutdoorPipeIntro(levelId, powerState) {
+      const E = global.MarioEntities;
+      const outdoorTheme = levelId === '7-2' ? 'snow' : 'overworld';
+      this.level = { id: levelId, theme: outdoorTheme, cols: 16, grid: [] };
+      this.player = new E.Player(2 * TILE + 2, 13 * TILE - 16, powerState);
+      this.player.onGround = true;
+      this.player.facing = 1;
+      this.cameraX = 0;
+      this.pipeIntro = {
+        levelId,
+        powerState,
+        theme: outdoorTheme,
+        phase: 'walk',
+        pipeX: 10 * TILE,
+        timer: 0
+      };
+      this.state = 'pipeIntro';
+      global.MarioAudio.playMusic('overworld', 1.0);
+    }
+
+    updateOutdoorPipeIntro() {
+      const pi = this.pipeIntro;
+      const p = this.player;
+      if (pi.phase === 'walk') {
+        p.vx = 1.45;
+        p.x += p.vx;
+        p.facing = 1;
+        p.onGround = true;
+        p.animFrame += 0.22;
+        if (p.x + p.w >= pi.pipeX + 2) {
+          pi.phase = 'enter';
+          pi.timer = 32;
+          p.vx = 0;
+          global.MarioAudio.stopMusic();
+          global.MarioAudio.playSfx('pipe');
+        }
+      } else {
+        p.x += 0.85;
+        pi.timer--;
+        if (pi.timer <= 0) {
+          this.pipeIntro = null;
+          this.loadLevel(pi.levelId, pi.powerState, false);
+        }
+      }
+    }
+
+    renderOutdoorPipeIntro(ctx) {
+      const S = global.MarioSprites;
+      const pi = this.pipeIntro;
+      S.drawScenery(ctx, { theme: pi.theme, cols: 32 }, 0, this.frame);
+      ctx.save();
+      const offsetX = this.screenW > 256 ? Math.floor((this.screenW - 256) / 2) : 0;
+      ctx.translate(offsetX, 0);
+      // Ground across entire visible screen width
+      const minC = -Math.ceil(offsetX / TILE) - 1;
+      const maxC = Math.ceil((this.screenW - offsetX) / TILE) + 1;
+      for (let c = minC; c <= maxC; c++) {
+        S.drawTile(ctx, '#', c * TILE, 13 * TILE, pi.theme, this.frame, 0);
+        S.drawTile(ctx, '#', c * TILE, 14 * TILE, pi.theme, this.frame, 0);
+      }
+      // Small starting castle on left
+      S.drawCastle(ctx, 0, 13 * TILE - 80);
+      // Mario walking into the pipe (drawn BEHIND pipe when sliding inside!)
+      if (pi.phase === 'enter') S.drawMario(ctx, this.player, this.frame, false);
+      // Iconic L-shaped green side-entry pipe at cols 10..13
+      S.drawTile(ctx, '<', 10 * TILE, 11 * TILE, pi.theme, this.frame, 0);
+      S.drawTile(ctx, ',', 10 * TILE, 12 * TILE, pi.theme, this.frame, 0);
+      S.drawTile(ctx, '-', 11 * TILE, 11 * TILE, pi.theme, this.frame, 0);
+      S.drawTile(ctx, '_', 11 * TILE, 12 * TILE, pi.theme, this.frame, 0);
+      S.drawTile(ctx, '[', 12 * TILE, 9 * TILE, pi.theme, this.frame, 0);
+      S.drawTile(ctx, ']', 13 * TILE, 9 * TILE, pi.theme, this.frame, 0);
+      for (let r = 10; r <= 12; r++) {
+        S.drawTile(ctx, '{', 12 * TILE, r * TILE, pi.theme, this.frame, 0);
+        S.drawTile(ctx, '}', 13 * TILE, r * TILE, pi.theme, this.frame, 0);
+      }
+      if (pi.phase === 'walk') S.drawMario(ctx, this.player, this.frame, false);
+      ctx.restore();
+      this.renderHUD(ctx);
     }
 
     advanceToNextLevel() {
@@ -1538,6 +1896,7 @@
       const S = global.MarioSprites;
 
       if (this.state === 'intro') { this.renderIntroScreen(ctx); return; }
+      if (this.state === 'pipeIntro') { this.renderOutdoorPipeIntro(ctx); return; }
       if (this.state === 'gameOver') { this.renderGameOverScreen(ctx); return; }
       if (this.state === 'victory') { this.renderVictoryScreen(ctx); return; }
 
@@ -1600,8 +1959,35 @@
         }
       }
 
+      // Pulley Ropes & Wheels for linked balance platforms (3-3, 4-3, 6-3)
+      for (const plat of this.platforms) {
+        if (plat.pulleyId && plat.partner && plat.x <= plat.partner.x && !plat.detached) {
+          const ax = Math.round(plat.x + plat.w / 2);
+          const bx = Math.round(plat.partner.x + plat.partner.w / 2);
+          const topY = Math.round(plat.pulleyTopY || 36);
+          ctx.strokeStyle = this.level.theme === 'night' ? '#fcfcfc' : '#fcd8a8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(ax, Math.round(plat.y));
+          ctx.lineTo(ax, topY);
+          ctx.lineTo(bx, topY);
+          ctx.lineTo(bx, Math.round(plat.partner.y));
+          ctx.stroke();
+          // Two pulley wheels
+          for (const wx of [ax, bx]) {
+            ctx.fillStyle = '#000000';
+            ctx.beginPath(); ctx.arc(wx, topY + 1, 4.2, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fc9838';
+            ctx.beginPath(); ctx.arc(wx, topY + 1, 3.0, 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fcfcfc';
+            ctx.fillRect(wx - 0.8, topY + 0.2, 1.6, 1.6);
+          }
+        }
+      }
+
       // Moving Platforms
       for (const plat of this.platforms) {
+        if (plat.y > 248) continue;
         ctx.fillStyle = '#000000';
         ctx.fillRect(Math.round(plat.x), Math.round(plat.y), plat.w, plat.h);
         ctx.fillStyle = '#fc9838';
@@ -1612,6 +1998,26 @@
 
       // Springboards
       for (const sp of this.springs) S.drawSpring(ctx, sp);
+
+      // Authentic NES Climbable Green Vines / Beanstalks
+      for (const v of this.vines) {
+        const vx = Math.round(v.x);
+        const y0 = Math.round(v.topY);
+        const y1 = Math.round(v.baseY);
+        ctx.fillStyle = '#00a800';
+        ctx.fillRect(vx - 2, y0, 4, y1 - y0);
+        ctx.fillStyle = '#80d010';
+        ctx.fillRect(vx - 1, y0, 2, y1 - y0);
+        for (let yy = y1 - 8; yy >= y0 + 2; yy -= 12) {
+          const side = ((Math.floor(yy / 12)) % 2 === 0) ? 1 : -1;
+          ctx.fillStyle = '#00a800';
+          ctx.beginPath();
+          ctx.ellipse(vx + side * 5, yy, 4.5, 2.5, side * -0.35, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#80d010';
+          ctx.fillRect(vx + side * 3, yy - 1, 3, 1.5);
+        }
+      }
 
       // Toad or Princess Peach (planted cleanly on castle rescue stone floor row 13!)
       if (this.level.toadPos) {

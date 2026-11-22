@@ -1277,17 +1277,28 @@
         return;
       }
 
-      if (isUnderwater && !player.onGround) {
-        const palette = this.getMarioPalette(player.powerState, player.starTimer, frame);
-        drawSwimmingMario(ctx, player, palette, frame, flip);
-        return;
-      }
-
       // Authentic 1985 NES ROM Mario sprites (Scale4x smoothed edges!) + 4-palette Starman cycle
       const starPhase = player.starTimer > 0
         ? Math.floor(frame / (player.starTimer > 120 ? 2 : 6)) % 4
         : 0;
       const starSuffix = starPhase === 0 ? '' : ('_s' + starPhase);
+
+      // Authentic crisp Scale4x NES Swimming Mario (replaces old stretched canvas rectangles!)
+      if (isUnderwater && !player.onGround) {
+        const prefix = isBig
+          ? ((isFire && starPhase === 0) ? 'mario_fire' : 'mario_big')
+          : 'mario_small';
+        const swimKey = (isBig && isFire && starPhase === 0 && player.fireAnimTimer > 0)
+          ? 'mario_fire_shoot'
+          : (player.vy < -0.9
+            ? (prefix + '_swim_f0')
+            : (prefix + '_swim_f' + ([1, 2, 1, 0][Math.floor(frame / 8) % 4])));
+        const swimImg = getImg(swimKey + starSuffix) || getImg(swimKey);
+        if (swimImg) {
+          drawMarioPng(swimImg, flip, isBig ? 30 : 16);
+          return;
+        }
+      }
 
       if (isBig) {
         const prefix = (isFire && starPhase === 0) ? 'mario_fire' : 'mario_big';
@@ -1541,14 +1552,38 @@
     },
 
     drawSpring(ctx, sp) {
-      const px = Math.round(sp.x), py = Math.round(sp.y), comp = sp.compress || 0;
+      const px = Math.round(sp.x);
+      const comp = Math.min(14, Math.round(sp.compress || 0));
+      const topY = Math.round(sp.y) + comp;
+      const botY = Math.round(sp.baseY || (sp.y + sp.h));
+      const curH = Math.max(8, botY - topY);
+      // Smooth tall NES coil spring (red top/bottom caps + crisp white zigzag coils)
       ctx.fillStyle = '#000000';
-      ctx.fillRect(px + 1, py + comp, 14, 16 - comp);
+      ctx.fillRect(px + 1, topY, 14, 4);
+      ctx.fillRect(px + 1, botY - 4, 14, 4);
       ctx.fillStyle = '#e52521';
-      ctx.fillRect(px + 2, py + comp + 1, 12, 3);
-      ctx.fillRect(px + 2, py + 12, 12, 3);
-      ctx.fillStyle = '#fcfcfc';
-      for (let yy = py + comp + 4; yy < py + 12; yy += 3) ctx.fillRect(px + 4, yy, 8, 2);
+      ctx.fillRect(px + 2, topY + 1, 12, 2);
+      ctx.fillRect(px + 2, botY - 3, 12, 2);
+      ctx.fillStyle = '#fca044';
+      ctx.fillRect(px + 3, topY + 1, 10, 1);
+      // Zigzag steel coil in between
+      const innerTop = topY + 4;
+      const innerBot = botY - 4;
+      if (innerBot > innerTop + 1) {
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 2.6;
+        ctx.beginPath();
+        ctx.moveTo(px + 4, innerTop);
+        ctx.lineTo(px + 12, (innerTop + innerBot) / 2);
+        ctx.lineTo(px + 4, innerBot);
+        ctx.moveTo(px + 12, innerTop);
+        ctx.lineTo(px + 4, (innerTop + innerBot) / 2);
+        ctx.lineTo(px + 12, innerBot);
+        ctx.stroke();
+        ctx.strokeStyle = '#fcfcfc';
+        ctx.lineWidth = 1.4;
+        ctx.stroke();
+      }
     },
 
     drawPowerUp(ctx, item, frame) {
@@ -1633,6 +1668,7 @@
         case 'B':
         case 'M':
         case 'S':
+        case 'V':
         case 'p':
         case 'b': {
           const bKey = spriteTheme === 'underwater' ? 'brick_underground' : ('brick_' + spriteTheme);
@@ -1912,10 +1948,34 @@
           break;
 
         case 'T': {
+          // Authentic lush green Treetop Canopy (Worlds 1-3, 3-3, 5-3!)
           ctx.save();
           const g = ctx.createLinearGradient(px, py, px, py + 15);
-          g.addColorStop(0, '#ff4d3b');
-          g.addColorStop(1, '#c81c14');
+          g.addColorStop(0, '#96e824');
+          g.addColorStop(0.55, '#00b400');
+          g.addColorStop(1, '#007a00');
+          ctx.fillStyle = g;
+          ctx.beginPath();
+          ctx.roundRect(px + 0.5, py + 0.5, 15, 14, 3);
+          ctx.fill();
+          ctx.lineWidth = 0.85;
+          ctx.strokeStyle = '#003c00';
+          ctx.stroke();
+          ctx.fillStyle = 'rgba(255,255,255,0.22)';
+          ctx.beginPath();
+          ctx.ellipse(px + 5.5, py + 4, 3.2, 1.4, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+          break;
+        }
+
+        case 't': {
+          // Authentic Giant Mushroom Cap platform (Worlds 4-3 & 6-3!)
+          ctx.save();
+          const isNight = (themeName === 'night');
+          const g = ctx.createLinearGradient(px, py, px, py + 15);
+          g.addColorStop(0, isNight ? '#e4e8f0' : '#ff5a36');
+          g.addColorStop(1, isNight ? '#9ca4b4' : '#c82014');
           ctx.fillStyle = g;
           ctx.beginPath();
           ctx.roundRect(px + 0.5, py + 0.5, 15, 13.5, 3);
@@ -1923,7 +1983,7 @@
           ctx.lineWidth = 0.9;
           ctx.strokeStyle = '#000000';
           ctx.stroke();
-          ctx.fillStyle = '#fcfcfc';
+          ctx.fillStyle = isNight ? '#606878' : '#fcfcfc';
           ctx.beginPath();
           ctx.arc(px + 5, py + 6, 2.1, 0, Math.PI * 2);
           ctx.arc(px + 11.5, py + 7.5, 1.7, 0, Math.PI * 2);

@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SUPER MARIO BROS. — Full Edition</title>
-  <link rel="stylesheet" href="styles.css?v=4" />
+  <link rel="stylesheet" href="styles.css?v=5" />
 </head>
 <body>
   <div class="cabinet">
@@ -34,11 +34,15 @@
           <button type="button" id="gp-close" class="tool-btn" title="Закрыть">✕</button>
         </div>
         <div id="gp-status" class="gp-status">Нажмите любую кнопку на джойстике...</div>
+        <div class="gp-presets">
+          <button type="button" id="gp-preset-mario" class="tool-btn">PS / Xbox (✕/△ Прыжок, □/○ Бег)</button>
+          <button type="button" id="gp-preset-nes" class="tool-btn">NES / Dendy (○/△ Прыжок, ✕/□ Бег)</button>
+        </div>
         <div class="gp-rows">
-          <div class="gp-row"><span>Прыжок (A)</span><button type="button" class="gp-bind" data-gp-bind="jump">B0 / B3</button></div>
-          <div class="gp-row"><span>Бег / Огонь (B)</span><button type="button" class="gp-bind" data-gp-bind="run">B1 / B2</button></div>
-          <div class="gp-row"><span>Старт / Пауза</span><button type="button" class="gp-bind" data-gp-bind="start">B9</button></div>
-          <div class="gp-row"><span>Выбор мира / Рестарт</span><button type="button" class="gp-bind" data-gp-bind="select">B8</button></div>
+          <div class="gp-row"><span>Прыжок (A)</span><button type="button" class="gp-bind" data-gp-bind="jump">✕ / △</button></div>
+          <div class="gp-row"><span>Бег / Огонь (B)</span><button type="button" class="gp-bind" data-gp-bind="run">○ / □ / R1</button></div>
+          <div class="gp-row"><span>Старт / Пауза</span><button type="button" class="gp-bind" data-gp-bind="start">Options</button></div>
+          <div class="gp-row"><span>Выбор мира / Рестарт</span><button type="button" class="gp-bind" data-gp-bind="select">Share</button></div>
         </div>
         <label class="gp-check">
           <input type="checkbox" id="gp-up-jump" />
@@ -91,13 +95,13 @@
     </footer>
   </div>
 
-  <script src="src/assets.js?v=8"></script>
+  <script src="src/assets.js?v=15"></script>
   <script src="src/audio.js?v=8"></script>
-  <script src="src/sprites.js?v=8"></script>
-  <script src="src/tmk_levels.js?v=8"></script>
-  <script src="src/levels.js?v=8"></script>
-  <script src="src/entities.js?v=8"></script>
-  <script src="src/engine.js?v=8"></script>
-  <script src="src/main.js?v=8"></script>
+  <script src="src/sprites.js?v=15"></script>
+  <script src="src/tmk_levels.js?v=16"></script>
+  <script src="src/levels.js?v=16"></script>
+  <script src="src/entities.js?v=17"></script>
+  <script src="src/engine.js?v=19"></script>
+  <script src="src/main.js?v=15"></script>
 </body>
 </html>

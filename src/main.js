@@ -96,7 +96,7 @@
   };
 
   const held = {
-    left: new Set(), right: new Set(), down: new Set(), jump: new Set(), run: new Set(),
+    left: new Set(), right: new Set(), up: new Set(), down: new Set(), jump: new Set(), run: new Set(),
   };
 
   function clearInputs() {
@@ -192,12 +192,14 @@
     if (action) {
       audio.init();
       pressAction(action, code);
+      if (code === 'ArrowUp' || code === 'KeyW') pressAction('up', code);
     }
   });
 
   window.addEventListener('keyup', ({ code }) => {
     const action = bindings[code];
     if (action) releaseAction(action, code);
+    if (code === 'ArrowUp' || code === 'KeyW') releaseAction('up', code);
   });
 
   function onFocusLost() {
@@ -258,28 +260,61 @@
     btnRestart.disabled = state !== 'playing' && !paused;
   }
 
-  // ---- Universal Plug-and-Play Gamepad / Joystick Support (Xbox, PlayStation, Switch, USB NES, DirectInput) ----
+  // ---- Universal Plug-and-Play Gamepad / Joystick Support (DualShock 4/5, Xbox, Switch, USB NES/Dendy, DirectInput) ----
   const btnGamepad = document.getElementById('btn-gamepad');
   const gpModal = document.getElementById('gamepad-modal');
   const gpClose = document.getElementById('gp-close');
   const gpDone = document.getElementById('gp-done');
   const gpReset = document.getElementById('gp-reset');
+  const gpPresetMario = document.getElementById('gp-preset-mario');
+  const gpPresetNes = document.getElementById('gp-preset-nes');
   const gpStatus = document.getElementById('gp-status');
   const gpLive = document.getElementById('gp-live');
   const gpUpJump = document.getElementById('gp-up-jump');
   const gpBindButtons = Array.from(document.querySelectorAll('[data-gp-bind]'));
 
-  const DEFAULT_GP_CFG = {
-    jump: [0, 3],
-    run: [1, 2, 4, 5, 6, 7],
-    start: [9],
-    select: [8],
-    upToJump: false
+  // Canonical physical button indices (normalized across Standard, DualShock DirectInput, and USB NES/Dendy!):
+  // 0 = Bottom (✕ / A), 1 = Right (○ / B / NES-A), 2 = Left (□ / X / NES-B), 3 = Top (△ / Y)
+  // 4 = L1, 5 = R1, 6 = L2, 7 = R2, 8 = Share/Select, 9 = Options/Start, 10 = L3, 11 = R3
+  const GP_BTN_NAMES = {
+    0: '✕/A', 1: '○/B', 2: '□/X', 3: '△/Y',
+    4: 'L1', 5: 'R1', 6: 'L2', 7: 'R2',
+    8: 'Share/Sel', 9: 'Opt/Start', 10: 'L3', 11: 'R3'
   };
+
+  const GP_PRESETS = {
+    standard: {
+      jump: [0, 3],
+      run: [1, 2, 4, 5, 6, 7],
+      start: [9],
+      select: [8],
+      upToJump: false
+    },
+    nes: {
+      jump: [1, 3],
+      run: [0, 2, 4, 5, 6, 7],
+      start: [9],
+      select: [8],
+      upToJump: false
+    }
+  };
+
+  const DEFAULT_GP_CFG = GP_PRESETS.standard;
+  const GP_STORAGE_KEY = 'smb_gamepad_cfg_v3';
+
+  function cloneGpCfg(src) {
+    return {
+      jump: src.jump.slice(),
+      run: src.run.slice(),
+      start: src.start.slice(),
+      select: src.select.slice(),
+      upToJump: !!src.upToJump
+    };
+  }
 
   function loadGpCfg() {
     try {
-      const raw = localStorage.getItem('smb_gamepad_cfg');
+      const raw = localStorage.getItem(GP_STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw);
         return {
@@ -291,13 +326,7 @@
         };
       }
     } catch { /* ignore storage errors */ }
-    return {
-      jump: DEFAULT_GP_CFG.jump.slice(),
-      run: DEFAULT_GP_CFG.run.slice(),
-      start: DEFAULT_GP_CFG.start.slice(),
-      select: DEFAULT_GP_CFG.select.slice(),
-      upToJump: DEFAULT_GP_CFG.upToJump
-    };
+    return cloneGpCfg(DEFAULT_GP_CFG);
   }
 
   let gpCfg = loadGpCfg();
@@ -307,11 +336,15 @@
   let gpToastTimer = 0;
 
   function saveGpCfg() {
-    try { localStorage.setItem('smb_gamepad_cfg', JSON.stringify(gpCfg)); } catch { /* ignore */ }
+    try { localStorage.setItem(GP_STORAGE_KEY, JSON.stringify(gpCfg)); } catch { /* ignore */ }
+  }
+
+  function btnLabel(idx) {
+    return GP_BTN_NAMES[idx] || ('B' + idx);
   }
 
   function formatBtnList(arr) {
-    return arr.slice(0, 3).map(i => 'B' + i).join(' / ');
+    return arr.slice(0, 3).map(btnLabel).join(' / ');
   }
 
   function renderGpConfigUi() {
@@ -321,6 +354,11 @@
       const isListen = gpListeningAction === act;
       b.classList.toggle('listening', isListen);
       b.textContent = isListen ? 'Нажмите кнопку...' : formatBtnList(gpCfg[act]);
+    }
+    if (gpPresetMario && gpPresetNes) {
+      const isNes = gpCfg.jump.includes(1) && !gpCfg.jump.includes(0) && gpCfg.run.includes(0);
+      gpPresetNes.classList.toggle('active', isNes);
+      gpPresetMario.classList.toggle('active', !isNes);
     }
   }
 
@@ -350,23 +388,23 @@
     gpModalPausedGame = false;
   }
 
+  function applyPreset(name) {
+    gpCfg = cloneGpCfg(GP_PRESETS[name] || DEFAULT_GP_CFG);
+    gpListeningAction = null;
+    saveGpCfg();
+    renderGpConfigUi();
+    audio.init();
+    audio.playSfx('beep');
+  }
+
   if (btnGamepad) btnGamepad.addEventListener('click', () => (gpModal && !gpModal.hidden) ? closeGpModal() : openGpModal());
   if (gpClose) gpClose.addEventListener('click', closeGpModal);
   if (gpDone) gpDone.addEventListener('click', closeGpModal);
   if (gpModal) gpModal.addEventListener('click', (e) => { if (e.target === gpModal) closeGpModal(); });
   if (gpUpJump) gpUpJump.addEventListener('change', () => { gpCfg.upToJump = gpUpJump.checked; saveGpCfg(); });
-  if (gpReset) gpReset.addEventListener('click', () => {
-    gpCfg = {
-      jump: DEFAULT_GP_CFG.jump.slice(),
-      run: DEFAULT_GP_CFG.run.slice(),
-      start: DEFAULT_GP_CFG.start.slice(),
-      select: DEFAULT_GP_CFG.select.slice(),
-      upToJump: false
-    };
-    gpListeningAction = null;
-    saveGpCfg();
-    renderGpConfigUi();
-  });
+  if (gpPresetMario) gpPresetMario.addEventListener('click', () => applyPreset('standard'));
+  if (gpPresetNes) gpPresetNes.addEventListener('click', () => applyPreset('nes'));
+  if (gpReset) gpReset.addEventListener('click', () => applyPreset('standard'));
   for (const b of gpBindButtons) {
     b.addEventListener('click', () => {
       const act = b.dataset.gpBind;
@@ -388,7 +426,7 @@
     start: false, select: false,
     left: false, right: false, up: false, down: false,
     jump: false, run: false,
-    rawButtons: new Set()
+    canonButtons: new Set()
   };
 
   function getConnectedPads() {
@@ -401,6 +439,88 @@
     return out;
   }
 
+  function detectPadProfile(pad) {
+    if (pad.mapping === 'standard') return 'standard';
+    const id = (pad.id || '').toLowerCase();
+    // DualShock 4 / DualSense over Bluetooth DirectInput (VID 054c, PID 09cc / 05c4 / 0ce6): B0=□, B1=✕, B2=○, B3=△, axes[9]=POV
+    if (/054c|dualshock|dualsense|wireless controller|ps4|ps5/.test(id)) return 'ds4-dinput';
+    // Classic USB NES / SNES / Dendy / Twin USB DirectInput pads (VID 0079 / 0810): B0=Top, B1=Right(A), B2=Bottom(B), B3=Left
+    if (/0079|0810|dragonrise|dendy|famicom|\bnes\b|\bsnes\b|retrolink|usb gamepad|twin usb/.test(id)) return 'nes-dinput';
+    return 'generic';
+  }
+
+  // Decode DirectInput POV Hat axis (commonly axes[9] on Windows DualShock 4 / Logitech / USB controllers)
+  function decodePovHat(val) {
+    // Centered/neutral POV hat is usually ~3.2857, >1.1, or NaN
+    if (typeof val !== 'number' || Number.isNaN(val) || val < -1.05 || val > 1.05) {
+      return { left: false, right: false, up: false, down: false };
+    }
+    // Windows 8-way POV hat: -1.0=U, -0.714=UR, -0.429=R, -0.143=DR, +0.143=D, +0.429=DL, +0.714=L, +1.0=UL
+    const up = val < -0.58 || val > 0.85;
+    const right = val > -0.85 && val < -0.02;
+    const down = val > -0.28 && val < 0.58;
+    const left = val > 0.28 && val <= 1.05;
+    return { left, right, up, down };
+  }
+
+  // Normalize any physical gamepad into canonical buttons (0=✕/A, 1=○/B, 2=□/X, 3=△/Y, 4..7=L/R, 8=Sel, 9=Start) + D-pad!
+  function readNormalizedPad(pad) {
+    const profile = detectPadProfile(pad);
+    const dead = 0.38;
+    const rawPressed = (idx) => !!(pad.buttons[idx] && (pad.buttons[idx].pressed || pad.buttons[idx].value > 0.55));
+    const canon = new Set();
+
+    let mapTable = null;
+    if (profile === 'ds4-dinput') {
+      // Raw DS4 DirectInput: 0=□->2, 1=✕->0, 2=○->1, 3=△->3
+      mapTable = { 0: 2, 1: 0, 2: 1, 3: 3 };
+    } else if (profile === 'nes-dinput') {
+      // Raw USB NES/SNES DirectInput: 0=Top->3, 1=Right(A)->1, 2=Bottom(B)->0, 3=Left->2
+      mapTable = { 0: 3, 1: 1, 2: 0, 3: 2 };
+    }
+
+    for (let i = 0; i < pad.buttons.length; i++) {
+      if (!rawPressed(i)) continue;
+      // Never leak Standard D-Pad buttons (12..15) or DS4 PS/Touchpad buttons into face bindings unless explicitly mapped
+      if (profile === 'standard' && i >= 12 && i <= 15) continue;
+      const cIdx = (mapTable && mapTable[i] !== undefined) ? mapTable[i] : i;
+      canon.add(cIdx);
+    }
+
+    let left = false, right = false, up = false, down = false;
+    const axX = pad.axes[0] || 0;
+    const axY = pad.axes[1] || 0;
+    if (axX < -dead) left = true;
+    if (axX > dead) right = true;
+    if (axY < -dead) up = true;
+    if (axY > dead) down = true;
+
+    if (profile === 'standard') {
+      if (rawPressed(14)) left = true;
+      if (rawPressed(15)) right = true;
+      if (rawPressed(12)) up = true;
+      if (rawPressed(13)) down = true;
+    } else {
+      // Non-standard DirectInput D-Pad: POV Hat (axes[9]) or secondary hat axes (6, 7)
+      // IMPORTANT: NEVER read buttons[12..15] here — on DualShock 4 DirectInput B12=PS and B13=Touchpad!
+      if (pad.axes.length > 9) {
+        const pov = decodePovHat(pad.axes[9]);
+        if (pov.left) left = true;
+        if (pov.right) right = true;
+        if (pov.up) up = true;
+        if (pov.down) down = true;
+      }
+      if (profile !== 'ds4-dinput' && pad.axes.length > 7 && Math.abs(pad.axes[6]) <= 1.05 && Math.abs(pad.axes[7]) <= 1.05) {
+        if (pad.axes[6] < -0.5) left = true;
+        if (pad.axes[6] > 0.5) right = true;
+        if (pad.axes[7] < -0.5) up = true;
+        if (pad.axes[7] > 0.5) down = true;
+      }
+    }
+
+    return { profile, canon, left, right, up, down };
+  }
+
   function updateGamepadStatusUi() {
     const pads = getConnectedPads();
     if (btnGamepad) {
@@ -411,8 +531,9 @@
     }
     if (gpStatus) {
       if (pads.length > 0) {
+        const pInfo = pads.map(p => `${p.id} [${detectPadProfile(p)}]`).join(' | ');
         gpStatus.classList.add('ok');
-        gpStatus.textContent = `Подключён (${pads.length}): ${pads.map(p => p.id).join(' | ')}`;
+        gpStatus.textContent = `Подключён (${pads.length}): ${pInfo}`;
       } else {
         gpStatus.classList.remove('ok');
         gpStatus.textContent = 'Джойстик не обнаружен. Подключите его и нажмите на нём любую кнопку.';
@@ -428,25 +549,12 @@
 
   window.addEventListener('gamepadconnected', updateGamepadStatusUi);
   window.addEventListener('gamepaddisconnected', () => {
-    for (const action of ['left', 'right', 'down', 'jump', 'run']) {
+    for (const action of ['left', 'right', 'up', 'down', 'jump', 'run']) {
       releaseAction(action, 'gamepad');
     }
+    gpPrev.canonButtons.clear();
     updateGamepadStatusUi();
   });
-
-  // Decode DirectInput POV Hat axis (commonly axes[9] on Windows non-standard USB/PS/Logitech controllers)
-  function decodePovHat(val) {
-    // Centered POV hat is usually > 1.2 (e.g. 3.2857) or NaN
-    if (typeof val !== 'number' || Number.isNaN(val) || val < -1.05 || val > 1.05) {
-      return { left: false, right: false, up: false, down: false };
-    }
-    // 8-way values: -1=U, -0.714=UR, -0.429=R, -0.143=DR, 0.143=D, 0.429=DL, 0.714=L, 1.0=UL
-    const up = val < -0.58 || val > 0.85;
-    const right = val > -0.85 && val < -0.02;
-    const down = val > -0.28 && val < 0.58;
-    const left = val > 0.28 && val <= 1.05;
-    return { left, right, up, down };
-  }
 
   function pollGamepad() {
     const pads = getConnectedPads();
@@ -455,60 +563,51 @@
 
     let left = false, right = false, up = false, down = false;
     let jump = false, run = false, start = false, select = false;
-    const pressedNow = new Set();
-    const dead = 0.35;
+    const canonNow = new Set();
 
     for (const pad of pads) {
-      const btn = (idx) => !!(pad.buttons[idx] && (pad.buttons[idx].pressed || pad.buttons[idx].value > 0.5));
-      for (let i = 0; i < pad.buttons.length; i++) {
-        if (btn(i)) pressedNow.add(i);
-      }
-
-      // 1. Standard D-Pad buttons (12..15) + Left Analog Stick (axes[0], axes[1])
-      const axX = pad.axes[0] || 0;
-      const axY = pad.axes[1] || 0;
-      if (btn(14) || axX < -dead) left = true;
-      if (btn(15) || axX > dead) right = true;
-      if (btn(12) || axY < -dead) up = true;
-      if (btn(13) || axY > dead) down = true;
-
-      // 2. Non-standard / DirectInput D-Pad support: POV hat (axes[9]) or secondary axes (6,7)
-      if (pad.mapping !== 'standard') {
-        if (pad.axes.length > 9) {
-          const pov = decodePovHat(pad.axes[9]);
-          if (pov.left) left = true;
-          if (pov.right) right = true;
-          if (pov.up) up = true;
-          if (pov.down) down = true;
-        }
-        if (pad.axes.length > 7 && Math.abs(pad.axes[6]) <= 1.05 && Math.abs(pad.axes[7]) <= 1.05) {
-          if (pad.axes[6] < -0.5) left = true;
-          if (pad.axes[6] > 0.5) right = true;
-          if (pad.axes[7] < -0.5) up = true;
-          if (pad.axes[7] > 0.5) down = true;
-        }
-      }
-
-      // 3. Action buttons from user/default mapping
-      if (gpCfg.jump.some(btn)) jump = true;
-      if (gpCfg.run.some(btn)) run = true;
-      if (gpCfg.start.some(btn)) start = true;
-      if (gpCfg.select.some(btn)) select = true;
+      const st = readNormalizedPad(pad);
+      if (st.left) left = true;
+      if (st.right) right = true;
+      if (st.up) up = true;
+      if (st.down) down = true;
+      for (const idx of st.canon) canonNow.add(idx);
     }
 
+    const hasAny = (list) => list.some(idx => canonNow.has(idx));
+    const newlyPressedAny = (list) => list.some(idx => canonNow.has(idx) && !gpPrev.canonButtons.has(idx));
+
+    if (hasAny(gpCfg.jump)) jump = true;
+    if (hasAny(gpCfg.run)) run = true;
+    if (hasAny(gpCfg.start)) start = true;
+    if (hasAny(gpCfg.select)) select = true;
     if (gpCfg.upToJump && up) jump = true;
 
-    // If the Gamepad Config modal is open: capture remap press & show live button readout
+    const jumpFresh = newlyPressedAny(gpCfg.jump) || (gpCfg.upToJump && up && !gpPrev.up);
+    const runFresh = newlyPressedAny(gpCfg.run);
+
+    const savePrev = () => {
+      gpPrev.canonButtons = canonNow;
+      gpPrev.left = left; gpPrev.right = right; gpPrev.up = up; gpPrev.down = down;
+      gpPrev.jump = jump; gpPrev.run = run; gpPrev.start = start; gpPrev.select = select;
+    };
+
+    // If the Gamepad Config modal is open: capture remap press & show live button + action readout
     if (gpModal && !gpModal.hidden) {
       if (gpLive) {
         const dirs = [left && '←', right && '→', up && '↑', down && '↓'].filter(Boolean);
-        const btns = Array.from(pressedNow).map(i => 'B' + i);
-        const combined = [...dirs, ...btns];
-        gpLive.textContent = 'Нажато: ' + (combined.length ? combined.join(' + ') : '—');
+        const btns = Array.from(canonNow).map(btnLabel);
+        const acts = [
+          left && 'Влево', right && 'Вправо', down && 'Вниз',
+          jump && 'Прыжок(A)', run && 'Бег/Огонь(B)',
+          start && 'Старт', select && 'Выбор'
+        ].filter(Boolean);
+        const rawStr = [...dirs, ...btns].join(' + ') || '—';
+        gpLive.textContent = acts.length ? `Нажато: ${rawStr}  →  ${acts.join(', ')}` : `Нажато: ${rawStr}`;
       }
       if (gpListeningAction) {
-        for (const idx of pressedNow) {
-          if (!gpPrev.rawButtons.has(idx) && idx < 12) {
+        for (const idx of canonNow) {
+          if (!gpPrev.canonButtons.has(idx)) {
             gpCfg[gpListeningAction] = [idx];
             gpListeningAction = null;
             saveGpCfg();
@@ -519,49 +618,73 @@
           }
         }
       }
-      gpPrev.rawButtons = pressedNow;
-      gpPrev.left = left; gpPrev.right = right; gpPrev.up = up; gpPrev.down = down;
-      gpPrev.jump = jump; gpPrev.run = run; gpPrev.start = start; gpPrev.select = select;
+      savePrev();
       return;
     }
-
-    gpPrev.rawButtons = pressedNow;
 
     if (left || right || up || down || jump || run || start || select) {
       audio.init();
     }
 
-    // Edge-triggered Start / Pause & Title Menu navigation
+    // Edge-triggered Start / Pause (return cleanly on menu activation so press never leaks into gameplay!)
     if (start && !gpPrev.start) {
       if (engine.state === 'title' || engine.state === 'gameOver' || engine.state === 'victory') {
         activateMenu();
+        savePrev();
+        return;
       } else {
         engine.togglePause();
+        engine.input.jumpPressed = false;
+        engine.input.firePressed = false;
+        savePrev();
+        return;
       }
     }
 
     if (engine.state === 'title') {
-      if (jump && !gpPrev.jump) activateMenu();
-      else if (select && !gpPrev.select) shiftTitleWorld(1);
+      if (jump && !gpPrev.jump) {
+        activateMenu();
+        savePrev();
+        return;
+      }
+      if (select && !gpPrev.select) shiftTitleWorld(1);
       else if (left && !gpPrev.left) shiftTitleWorld(-1);
       else if (right && !gpPrev.right) shiftTitleWorld(1);
       else if (up && !gpPrev.up) shiftTitleWorld(4);
       else if (down && !gpPrev.down) shiftTitleWorld(-4);
     } else if (engine.state === 'gameOver' || engine.state === 'victory') {
-      if (jump && !gpPrev.jump) activateMenu();
+      if (jump && !gpPrev.jump) {
+        activateMenu();
+        savePrev();
+        return;
+      }
     } else {
       if (select && !gpPrev.select && engine.state === 'paused') {
         restartLevel();
+        savePrev();
+        return;
       }
       if (left) pressAction('left', 'gamepad'); else releaseAction('left', 'gamepad');
       if (right) pressAction('right', 'gamepad'); else releaseAction('right', 'gamepad');
+      if (up) pressAction('up', 'gamepad'); else releaseAction('up', 'gamepad');
       if (down) pressAction('down', 'gamepad'); else releaseAction('down', 'gamepad');
-      if (jump) pressAction('jump', 'gamepad'); else releaseAction('jump', 'gamepad');
-      if (run) pressAction('run', 'gamepad'); else releaseAction('run', 'gamepad');
+
+      // Per-button rising edge guarantees tapping □ to shoot works even while holding R1 to sprint!
+      if (jump) {
+        pressAction('jump', 'gamepad');
+        if (jumpFresh) engine.input.jumpPressed = true;
+      } else {
+        releaseAction('jump', 'gamepad');
+      }
+      if (run) {
+        pressAction('run', 'gamepad');
+        if (runFresh) engine.input.firePressed = true;
+      } else {
+        releaseAction('run', 'gamepad');
+      }
     }
 
-    gpPrev.left = left; gpPrev.right = right; gpPrev.up = up; gpPrev.down = down;
-    gpPrev.jump = jump; gpPrev.run = run; gpPrev.start = start; gpPrev.select = select;
+    savePrev();
   }
 
   renderGpConfigUi();

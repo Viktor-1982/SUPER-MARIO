@@ -952,9 +952,12 @@
       springs: (raw.springs || []).map(sp => Object.assign({}, sp))
     };
     if (raw.isBonus) lv.isBonus = true;
+    if (raw.isCloud) lv.isCloud = true;
+    if (raw.vineTarget) { lv.vineTarget = raw.vineTarget; lv.vineReturnCol = raw.vineReturnCol; }
     if (raw.isUnderwater) lv.isUnderwater = true;
     if (raw.isCastle) { lv.isCastle = true; lv.isFinalCastle = !!raw.isFinalCastle; }
     if (raw.bulletBarrage) lv.bulletBarrage = true;
+    if (raw.cheepBarrage) lv.cheepBarrage = true;
     if (raw.spawnPipeRow !== undefined) lv.spawnPipeRow = raw.spawnPipeRow;
     if (raw.flagpoleCol !== undefined) { lv.flagpoleCol = raw.flagpoleCol; lv.castleCol = raw.castleCol; }
     if (raw.axeCol !== undefined) {

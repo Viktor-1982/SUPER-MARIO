@@ -272,6 +272,18 @@ kbd {
   color: #8bf5b5;
 }
 
+.gp-presets {
+  display: flex;
+  gap: 6px;
+}
+
+.gp-presets .tool-btn {
+  flex: 1;
+  font-size: 11px;
+  padding: 5px 6px;
+  line-height: 1.25;
+}
+
 .gp-rows {
   display: flex;
   flex-direction: column;

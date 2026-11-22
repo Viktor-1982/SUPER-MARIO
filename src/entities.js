@@ -33,6 +33,9 @@
       this.dead = false;
       this.deadTimer = 0;
       this.invulnTimer = 0;
+      this.pipeSafeTimer = 0;
+      this.springBoostTimer = 0;
+      this.stompGrace = 0;
       this.starTimer = 0;
       this.fireCooldown = 0;
       this.fireAnimTimer = 0;
@@ -383,7 +386,7 @@
         return;
       }
       this.x += this.vx;
-      if (this.x < engine.cameraX - 40 || this.x > engine.cameraX + 310) {
+      if (this.x < engine.cameraX - 40 || this.x > engine.cameraX + (engine.screenW || 256) + 48) {
         this.remove = true;
       }
     }
@@ -422,7 +425,8 @@
         this.vy = Math.min(0.65, this.vy + 0.05);
       }
       this.x += this.vx;
-      this.y = Math.max(36, Math.min(200, this.y + this.vy));
+      // Authentic 1985 NES: Bloopers stay at least 1 tile above the sea floor so Small Mario can walk under them!
+      this.y = Math.max(36, Math.min(184, this.y + this.vy));
     }
   }
 
@@ -455,12 +459,9 @@
       if (this.leaping) {
         this.x += this.vx;
         this.y += this.vy;
-        this.vy += 0.14;
+        this.vy += 0.11;
         if (this.y > 260) {
-          // Respawn leaping fish from below
-          this.y = 248;
-          this.x = Math.max(engine.cameraX + 20, this.x - 120);
-          this.vy = -5.8 - Math.random() * 1.1;
+          this.remove = true;
         }
       } else {
         this.phase += 0.06;
@@ -490,7 +491,7 @@
       const distX = Math.abs((engine.player.x + engine.player.w / 2) - (this.x + 8));
       if (this.phase === 'hidden') {
         this.y = this.baseY + 2;
-        if (distX > 26) {
+        if (distX > 32) {
           this.timer--;
           if (this.timer <= 0) this.phase = 'rising';
         }
@@ -549,6 +550,10 @@
       }
 
       this.facing = engine.player.x < this.x ? -1 : 1;
+      if (engine.level && engine.level.bridgeStartCol >= 0 && engine.level.bridgeEndCol > engine.level.bridgeStartCol) {
+        this.minX = engine.level.bridgeStartCol * 16 + 8;
+        this.maxX = Math.max(this.minX + 16, (engine.level.bridgeEndCol - 2) * 16 - 4);
+      }
       this.x += this.vx;
       if (this.x < this.minX) { this.x = this.minX; this.vx = Math.abs(this.vx); }
       else if (this.x > this.maxX) { this.x = this.maxX; this.vx = -Math.abs(this.vx); }
@@ -588,13 +593,18 @@
   class Springboard {
     constructor(x, y) {
       this.x = x;
-      this.y = y;
+      this.y = y - 10; // Authentic tall NES coil spring (26px tall, planted cleanly on row 13!)
+      this.baseY = y + 16;
       this.w = 16;
-      this.h = 16;
+      this.h = 26;
       this.compress = 0;
+      this.launchTimer = 0;
+      this.boostHeld = false;
     }
     update() {
-      if (this.compress > 0) this.compress = Math.max(0, this.compress - 0.5);
+      if (this.launchTimer <= 0 && this.compress > 0) {
+        this.compress = Math.max(0, this.compress - 1.2);
+      }
     }
   }
 
@@ -612,17 +622,68 @@
       this.wrap = cfg.wrap || 0;
       this.drop = !!cfg.drop;
       this.seesaw = !!cfg.seesaw;
+      this.pulleyId = cfg.pulleyId || 0;
+      this.pulleyTopY = cfg.pulleyTopY || 36;
+      this.partner = null;
+      this.pulleyVy = 0;
+      this.detached = false;
+      this.respawnTimer = 0;
       this.dropped = false;
       this.dir = 1;
       this.dx = 0;
       this.dy = 0;
     }
 
-    update(isRidden = false) {
+    update(isRidden = false, engine = null) {
       const prevX = this.x;
       const prevY = this.y;
-      if (this.wrap) {
-        // Continuous NES vertical elevator wrap-around (1-2, 2-4, 4-2, 5-4)
+      if (this.pulleyId && this.partner) {
+        // Real 1985 NES Pulley / Balance Platform Pair (3-3, 4-3, 6-3)!
+        if (this.detached) {
+          this.pulleyVy = Math.min(4.2, this.pulleyVy + 0.16);
+          this.y += this.pulleyVy;
+          if (this.y > 268) {
+            this.respawnTimer++;
+            if (this.respawnTimer > 180) {
+              this.detached = false;
+              this.respawnTimer = 0;
+              this.pulleyVy = 0;
+              this.y = this.homeY;
+              this.partner.detached = false;
+              this.partner.respawnTimer = 0;
+              this.partner.pulleyVy = 0;
+              this.partner.y = this.partner.homeY;
+            }
+          }
+        } else {
+          // Only master (left-most of the pair) integrates the shared pulley balance
+          if (this.x <= this.partner.x) {
+            const partnerRidden = !!(engine && engine.player && engine.player.ridingPlatform === this.partner);
+            if (isRidden && !partnerRidden) {
+              this.pulleyVy = Math.min(1.15, this.pulleyVy + 0.045);
+            } else if (partnerRidden && !isRidden) {
+              this.pulleyVy = Math.max(-1.15, this.pulleyVy - 0.045);
+            } else {
+              this.pulleyVy *= 0.86;
+              if (Math.abs(this.pulleyVy) < 0.02) this.pulleyVy = 0;
+            }
+            this.y += this.pulleyVy;
+            this.partner.y -= this.pulleyVy;
+            this.partner.pulleyVy = -this.pulleyVy;
+            // If either side reaches the pulley wheel, rope detaches and both fall (+1000 pts)!
+            if (this.y <= this.pulleyTopY + 10 || this.partner.y <= this.pulleyTopY + 10) {
+              this.detached = true;
+              this.partner.detached = true;
+              this.pulleyVy = 0.6;
+              this.partner.pulleyVy = 0.6;
+              if (engine) engine.addScore(1000, this.x + this.w / 2, this.y - 8);
+            }
+            this.partner.dx = 0;
+            this.partner.dy = -this.pulleyVy;
+          }
+        }
+      } else if (this.wrap) {
+        // Continuous NES vertical elevator wrap-around (1-2, 2-4, 4-2, 5-4, 5-2/6-2 underwater)
         this.y += this.speed * this.wrap;
         if (this.wrap > 0 && this.y > this.max) this.y = this.min;
         if (this.wrap < 0 && this.y < this.min) this.y = this.max;
@@ -635,7 +696,6 @@
           this.y = Math.max(this.homeY, this.y - 0.5);
         }
       } else if (this.seesaw) {
-        // Balance/pulley lift: gently sinks under Mario's weight, rises smoothly back
         if (isRidden) {
           this.y = Math.min(this.max, this.y + this.speed);
         } else if (this.y > this.homeY) {
@@ -650,8 +710,10 @@
         if (this.y >= this.max) { this.y = this.max; this.dir = -1; }
         if (this.y <= this.min) { this.y = this.min; this.dir = 1; }
       }
-      this.dx = this.x - prevX;
-      this.dy = this.y - prevY;
+      if (!(this.pulleyId && this.partner && this.x > this.partner.x && !this.detached)) {
+        this.dx = this.x - prevX;
+        this.dy = this.y - prevY;
+      }
     }
   }
 

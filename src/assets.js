@@ -51,6 +51,9 @@
     mario_small_run_f0: 'assets/sprites/mario_hd/mario_small_run_f0.png',
     mario_small_run_f1: 'assets/sprites/mario_hd/mario_small_run_f1.png',
     mario_small_run_f2: 'assets/sprites/mario_hd/mario_small_run_f2.png',
+    mario_small_swim_f0:'assets/sprites/mario_hd/mario_small_swim_f0.png',
+    mario_small_swim_f1:'assets/sprites/mario_hd/mario_small_swim_f1.png',
+    mario_small_swim_f2:'assets/sprites/mario_hd/mario_small_swim_f2.png',
     mario_big_idle:     'assets/sprites/mario_hd/mario_big_idle.png',
     mario_big_jump:     'assets/sprites/mario_hd/mario_big_jump.png',
     mario_big_crouch:   'assets/sprites/mario_hd/mario_big_crouch.png',
@@ -58,6 +61,9 @@
     mario_big_walk_f0:  'assets/sprites/mario_hd/mario_small_walk_f0.png',
     mario_big_walk_f1:  'assets/sprites/mario_hd/mario_small_walk_f1.png',
     mario_big_walk_f2:  'assets/sprites/mario_hd/mario_small_walk_f2.png',
+    mario_big_swim_f0:  'assets/sprites/mario_hd/mario_big_swim_f0.png',
+    mario_big_swim_f1:  'assets/sprites/mario_hd/mario_big_swim_f1.png',
+    mario_big_swim_f2:  'assets/sprites/mario_hd/mario_big_swim_f2.png',
     mario_fire_idle:    'assets/sprites/mario_hd/mario_fire_idle.png',
     mario_fire_jump:    'assets/sprites/mario_hd/mario_fire_jump.png',
     mario_fire_crouch:  'assets/sprites/mario_hd/mario_fire_crouch.png',
@@ -65,6 +71,9 @@
     mario_fire_walk_f0: 'assets/sprites/mario_hd/mario_fire_walk_f0.png',
     mario_fire_walk_f1: 'assets/sprites/mario_hd/mario_fire_walk_f1.png',
     mario_fire_walk_f2: 'assets/sprites/mario_hd/mario_fire_walk_f2.png',
+    mario_fire_swim_f0: 'assets/sprites/mario_hd/mario_fire_swim_f0.png',
+    mario_fire_swim_f1: 'assets/sprites/mario_hd/mario_fire_swim_f1.png',
+    mario_fire_swim_f2: 'assets/sprites/mario_hd/mario_fire_swim_f2.png',
 
     // Enemies & NPCs (Scale4x crisp original 1985 NES sprites!)
     goomba_idle:        'assets/sprites/hd/goomba_idle.png',
@@ -171,12 +180,18 @@
         mario_small_run_f0: 'mario_small_run_f0',
         mario_small_run_f1: 'mario_small_run_f1',
         mario_small_run_f2: 'mario_small_run_f2',
+        mario_small_swim_f0:'mario_small_swim_f0',
+        mario_small_swim_f1:'mario_small_swim_f1',
+        mario_small_swim_f2:'mario_small_swim_f2',
         mario_big_idle:     'mario_big_idle',
         mario_big_jump:     'mario_big_jump',
         mario_big_crouch:   'mario_big_crouch',
         mario_big_walk_f0:  'mario_small_walk_f0',
         mario_big_walk_f1:  'mario_small_walk_f1',
-        mario_big_walk_f2:  'mario_small_walk_f2'
+        mario_big_walk_f2:  'mario_small_walk_f2',
+        mario_big_swim_f0:  'mario_big_swim_f0',
+        mario_big_swim_f1:  'mario_big_swim_f1',
+        mario_big_swim_f2:  'mario_big_swim_f2'
       };
       for (const [key, fileBase] of Object.entries(starBases)) {
         for (const s of ['s1', 's2', 's3']) {
