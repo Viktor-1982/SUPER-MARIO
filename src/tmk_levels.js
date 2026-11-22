@@ -1112,7 +1112,7 @@
       mazeLoops: [],
       enemies: [{type:'bowser',col:135,row:8,worldNum:5}],
       platforms: [{x:2208,y:96,w:32,h:8,axis:'x',min:2168,max:2248,speed:0.75}, {x:1360,y:160,w:48,h:8,axis:'y',min:16,max:236,speed:0.75,wrap:-1}, {x:1408,y:160,w:48,h:8,axis:'y',min:16,max:236,speed:0.75,wrap:1}],
-      fireBars: [{cx:376,cy:120,length:11,speed:0.047,angle:0}, {cx:696,cy:216,length:4,speed:-0.047,angle:1.1}, {cx:792,cy:152,length:5,speed:0.047,angle:2.2}, {cx:888,cy:88,length:5,speed:-0.047,angle:3.3}, {cx:888,cy:216,length:4,speed:0.047,angle:4.4}, {cx:984,cy:152,length:5,speed:-0.047,angle:5.5}, {cx:1080,cy:216,length:4,speed:0.047,angle:0.32}, {cx:1176,cy:152,length:5,speed:-0.047,angle:1.42}, {cx:1320,cy:104,length:5,speed:0.047,angle:2.52}, {cx:1480,cy:168,length:5,speed:-0.047,angle:3.62}, {cx:1656,cy:184,length:5,speed:0.047,angle:4.72}],
+      fireBars: [{cx:376,cy:120,length:11,speed:0.028,angle:0}, {cx:696,cy:216,length:4,speed:-0.042,angle:1.1}, {cx:792,cy:152,length:5,speed:0.042,angle:2.2}, {cx:888,cy:88,length:5,speed:-0.042,angle:3.3}, {cx:888,cy:216,length:4,speed:0.042,angle:4.4}, {cx:984,cy:152,length:5,speed:-0.042,angle:5.5}, {cx:1080,cy:216,length:4,speed:0.042,angle:0.32}, {cx:1176,cy:152,length:5,speed:-0.042,angle:1.42}, {cx:1320,cy:104,length:5,speed:0.042,angle:2.52}, {cx:1480,cy:168,length:5,speed:-0.042,angle:3.62}, {cx:1656,cy:184,length:5,speed:0.042,angle:4.72}],
       podoboos: [{x:264,baseY:244,minY:96,timer:63}, {x:328,baseY:244,minY:96,timer:70}, {x:488,baseY:244,minY:96,timer:45}, {x:1752,baseY:244,minY:96,timer:77}, {x:1816,baseY:244,minY:96,timer:84}, {x:2104,baseY:244,minY:96,timer:73}],
       cannons: [],
       springs: []
