@@ -28,6 +28,8 @@
     setPressed(btnMute, muted);
   }
 
+  const RENDER_SCALE = 4;
+
   function syncViewport() {
     const classic = screenBezel.classList.contains('aspect-classic');
     let targetW = 256;
@@ -36,10 +38,12 @@
       const aspect = rect.height > 0 ? (rect.width / rect.height) : (window.innerWidth / window.innerHeight);
       targetW = Math.max(256, Math.min(512, Math.round(240 * aspect)));
     }
-    if (canvas.width !== targetW || canvas.height !== 240) {
-      canvas.width = targetW;
-      canvas.height = 240;
-      engine.setScreenWidth(targetW);
+    const pxW = targetW * RENDER_SCALE;
+    const pxH = 240 * RENDER_SCALE;
+    if (canvas.width !== pxW || canvas.height !== pxH) {
+      canvas.width = pxW;
+      canvas.height = pxH;
+      engine.setScreenWidth(targetW, RENDER_SCALE);
     }
   }
 

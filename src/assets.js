@@ -44,27 +44,27 @@
   };
 
   const SPRITE_FILES = {
-    // Mario (Small, Super, Fire)
-    mario_small_idle:   'assets/sprites/mario_small_idle.png',
-    mario_small_jump:   'assets/sprites/mario_small_jump.png',
-    mario_small_dead:   'assets/sprites/mario_small_dead.png',
-    mario_small_run_f0: 'assets/sprites/mario_small_run_f0.png',
-    mario_small_run_f1: 'assets/sprites/mario_small_run_f1.png',
-    mario_small_run_f2: 'assets/sprites/mario_small_run_f2.png',
-    mario_big_idle:     'assets/sprites/mario_big_idle.png',
-    mario_big_jump:     'assets/sprites/mario_big_jump.png',
-    mario_big_crouch:   'assets/sprites/mario_big_crouch.png',
-    mario_big_walk:     'assets/sprites/mario_big_walk.png',
-    mario_big_walk_f0:  'assets/sprites/mario_small_walk_f0.png',
-    mario_big_walk_f1:  'assets/sprites/mario_small_walk_f1.png',
-    mario_big_walk_f2:  'assets/sprites/mario_small_walk_f2.png',
-    mario_fire_idle:    'assets/sprites/mario_fire_idle.png',
-    mario_fire_jump:    'assets/sprites/mario_fire_jump.png',
-    mario_fire_crouch:  'assets/sprites/mario_fire_crouch.png',
-    mario_fire_shoot:   'assets/sprites/mario_fire_shoot.png',
-    mario_fire_walk_f0: 'assets/sprites/mario_fire_walk_f0.png',
-    mario_fire_walk_f1: 'assets/sprites/mario_fire_walk_f1.png',
-    mario_fire_walk_f2: 'assets/sprites/mario_fire_walk_f2.png',
+    // Mario (Small, Super, Fire — crisp Scale4x original 1985 NES sprites!)
+    mario_small_idle:   'assets/sprites/mario_hd/mario_small_idle.png',
+    mario_small_jump:   'assets/sprites/mario_hd/mario_small_jump.png',
+    mario_small_dead:   'assets/sprites/mario_hd/mario_small_dead.png',
+    mario_small_run_f0: 'assets/sprites/mario_hd/mario_small_run_f0.png',
+    mario_small_run_f1: 'assets/sprites/mario_hd/mario_small_run_f1.png',
+    mario_small_run_f2: 'assets/sprites/mario_hd/mario_small_run_f2.png',
+    mario_big_idle:     'assets/sprites/mario_hd/mario_big_idle.png',
+    mario_big_jump:     'assets/sprites/mario_hd/mario_big_jump.png',
+    mario_big_crouch:   'assets/sprites/mario_hd/mario_big_crouch.png',
+    mario_big_walk:     'assets/sprites/mario_hd/mario_big_walk.png',
+    mario_big_walk_f0:  'assets/sprites/mario_hd/mario_small_walk_f0.png',
+    mario_big_walk_f1:  'assets/sprites/mario_hd/mario_small_walk_f1.png',
+    mario_big_walk_f2:  'assets/sprites/mario_hd/mario_small_walk_f2.png',
+    mario_fire_idle:    'assets/sprites/mario_hd/mario_fire_idle.png',
+    mario_fire_jump:    'assets/sprites/mario_hd/mario_fire_jump.png',
+    mario_fire_crouch:  'assets/sprites/mario_hd/mario_fire_crouch.png',
+    mario_fire_shoot:   'assets/sprites/mario_hd/mario_fire_shoot.png',
+    mario_fire_walk_f0: 'assets/sprites/mario_hd/mario_fire_walk_f0.png',
+    mario_fire_walk_f1: 'assets/sprites/mario_hd/mario_fire_walk_f1.png',
+    mario_fire_walk_f2: 'assets/sprites/mario_hd/mario_fire_walk_f2.png',
 
     // Enemies & NPCs
     goomba_idle:        'assets/sprites/goomba_idle.png',
@@ -179,7 +179,7 @@
           const img = new Image();
           img.onload = () => { if (img.naturalWidth > 0) this.sprites[key + '_' + s] = img; };
           img.onerror = () => {};
-          img.src = `assets/sprites/${fileBase}_${s}.png`;
+          img.src = `assets/sprites/mario_hd/${fileBase}_${s}.png`;
         }
       }
 

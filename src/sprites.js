@@ -1192,10 +1192,17 @@
       const pw = player.w || 12;
       const ph = player.h || (isBig ? 30 : 16);
 
+      // Draw crisp Scale4x original 1985 NES Mario PNG at 1:1 on our 4x canvas (dest = natural / 4)
+      const drawMarioPng = (img, useFlip, boxH = ph) => {
+        const dw = img.naturalWidth > 32 ? img.naturalWidth / 4 : img.naturalWidth;
+        const dh = img.naturalHeight > 40 ? img.naturalHeight / 4 : img.naturalHeight;
+        drawImgAnchored(ctx, img, player.x, player.y, pw, boxH, useFlip, dw, dh);
+      };
+
       if (player.dead) {
         const deadImg = getImg('mario_small_dead');
         if (deadImg) {
-          drawImgAnchored(ctx, deadImg, player.x, player.y, pw, 16, false);
+          drawMarioPng(deadImg, false, 16);
           return;
         }
         const pal = this.getMarioPalette(player.powerState, player.starTimer, frame);
@@ -1209,11 +1216,11 @@
         return;
       }
 
-      // Authentic 1985 NES ROM PNG sprites — including exact 4-palette Starman invincibility cycle!
+      // Authentic 1985 NES ROM Mario sprites (Scale4x smoothed edges!) + 4-palette Starman cycle
       const starPhase = player.starTimer > 0
         ? Math.floor(frame / (player.starTimer > 120 ? 2 : 6)) % 4
         : 0;
-      const starSuffix = starPhase === 0 ? '' : `_s${starPhase}`;
+      const starSuffix = starPhase === 0 ? '' : ('_s' + starPhase);
 
       if (isBig) {
         const prefix = (isFire && starPhase === 0) ? 'mario_fire' : 'mario_big';
@@ -1236,7 +1243,7 @@
         }
         const img = getImg(key + starSuffix) || getImg(key);
         if (img) {
-          drawImgAnchored(ctx, img, player.x, player.y, pw, ph, useFlip);
+          drawMarioPng(img, useFlip);
           return;
         }
       } else {
@@ -1255,7 +1262,7 @@
         }
         const img = key ? (getImg(key + starSuffix) || getImg(key)) : null;
         if (img) {
-          drawImgAnchored(ctx, img, player.x, player.y, pw, ph, useFlip);
+          drawMarioPng(img, useFlip);
           return;
         }
       }

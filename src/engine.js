@@ -13,6 +13,7 @@
     constructor(canvas) {
       this.canvas = canvas;
       this.ctx = canvas.getContext('2d');
+      this.renderScale = 1;
       this.screenW = canvas.width || 256;
       this.ctx.imageSmoothingEnabled = false;
 
@@ -96,7 +97,8 @@
       }
     }
 
-    setScreenWidth(w) {
+    setScreenWidth(w, scale = 1) {
+      this.renderScale = Math.max(1, scale || 1);
       this.screenW = Math.max(256, Math.round(w));
       this.ctx.imageSmoothingEnabled = false;
       if (this.level) {
@@ -364,7 +366,22 @@
       const key = `${col},${row}`;
       this.bumpedTiles.set(key, 6);
 
+      // Authentic 1985 NES: bumping a block from below pops & collects any coin resting directly on top!
+      if (row > 0 && this.getTile(col, row - 1) === 'C') {
+        this.setTile(col, row - 1, '.');
+        this.spawnCoinPop(col * TILE, (row - 1) * TILE - 8);
+        this.addCoin(col * TILE, (row - 1) * TILE - 12);
+      }
+
       const blockBox = { x: col * TILE - 2, y: (row - 1) * TILE - 2, w: TILE + 4, h: TILE + 4 };
+      // Bounce any moving Power-Up (Mushroom / 1-UP / Star) sitting on top of the bumped block
+      for (const item of this.powerUps) {
+        if (!item.emerging && item.kind !== 'flower' && global.MarioEntities.aabb(item, blockBox)) {
+          item.vy = -3.6;
+          const speed = Math.abs(item.vx) || 1.05;
+          item.vx = (item.x + item.w / 2 < col * TILE + 8) ? -speed : speed;
+        }
+      }
       for (const e of this.enemies) {
         if (!e.dead && !e.squashed && !e.flipped && e.type !== 'piranha' && e.type !== 'bowser') {
           if (global.MarioEntities.aabb(e, blockBox)) {
@@ -1510,6 +1527,14 @@
     // ========================================================================
     render() {
       const ctx = this.ctx;
+      ctx.save();
+      if (this.renderScale !== 1) ctx.scale(this.renderScale, this.renderScale);
+      ctx.imageSmoothingEnabled = false;
+      this.renderFrame(ctx);
+      ctx.restore();
+    }
+
+    renderFrame(ctx) {
       const S = global.MarioSprites;
 
       if (this.state === 'intro') { this.renderIntroScreen(ctx); return; }
