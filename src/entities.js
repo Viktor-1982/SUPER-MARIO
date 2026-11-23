@@ -254,15 +254,16 @@
     constructor(x, y) {
       this.type = 'lakitu';
       this.x = x;
-      this.y = Math.max(30, Math.min(44, y));
+      this.y = Math.max(28, Math.min(38, y));
       this.baseY = this.y;
       this.w = 16;
       this.h = 24;
-      this.vx = -1.2;
+      this.vx = -1.1;
       this.vy = 0;
       this.phase = 0;
       this.facing = -1;
-      this.throwTimer = 115;
+      this.sweepDir = -1; // Authentic 1985 NES pendulum swoop across top of screen (-1 left, +1 right)
+      this.throwTimer = 110;
       this.duckTimer = 0;
       this.retreating = false;
       this.active = false;
@@ -286,24 +287,31 @@
         this.retreating = true;
       }
       if (this.retreating) {
-        this.vx = Math.max(-2.6, this.vx - 0.12);
+        this.vx = Math.max(-2.6, this.vx - 0.1);
         this.x += this.vx;
         this.facing = -1;
         if (this.x < engine.cameraX - 48) this.remove = true;
         return;
       }
 
-      // Smooth NES cloud flight tracking slightly ahead of Mario (fast enough to keep up with sprint!)
-      const leadOffset = engine.player.vx >= 0 ? 48 : -28;
-      const targetX = engine.player.x + leadOffset;
-      const dist = targetX - this.x;
-      const accel = Math.abs(dist) > 64 ? 0.16 : 0.08;
-      this.vx += dist > 0 ? accel : -accel;
-      const maxSpd = Math.abs(dist) > 72 ? 2.75 : 2.1;
+      // Authentic 1985 NES MoveLakitu: wide graceful back-and-forth swoops across the upper sky,
+      // catching up smoothly when Mario sprints right!
+      const relX = this.x - engine.player.x;
+      const rightBound = engine.player.vx > 0.8 ? 84 : 68;
+      const leftBound = engine.player.vx > 0.8 ? 8 : -44;
+      if (relX > rightBound) this.sweepDir = -1;
+      else if (relX < leftBound) this.sweepDir = 1;
+
+      const farBehind = relX < -64;
+      const farAhead = relX > 110;
+      const accel = (farBehind || farAhead) ? 0.095 : 0.042;
+      const maxSpd = farBehind ? 2.75 : (engine.player.vx > 1.2 ? 2.55 : 1.55);
+      this.vx += this.sweepDir * accel;
       this.vx = Math.max(-maxSpd, Math.min(maxSpd, this.vx));
       this.x += this.vx;
-      this.phase += 0.06;
-      this.y = this.baseY + Math.sin(this.phase) * 4 + (this.duckTimer > 0 ? 3 : 0);
+
+      this.phase += 0.05;
+      this.y = this.baseY + Math.sin(this.phase) * 2.2;
       this.facing = engine.player.x < this.x ? -1 : 1;
 
       if (this.duckTimer > 0) {
@@ -311,15 +319,15 @@
         if (this.duckTimer === 0) {
           const activeSpinies = engine.enemies.filter(e => e.type === 'spiny' && !e.dead).length;
           if (activeSpinies < 3) {
-            const eggVx = Math.max(-0.35, Math.min(0.35, this.vx * 0.2));
-            engine.enemies.push(new Spiny(this.x, this.y + 4, eggVx, false));
+            // Exact 1985 NES SMB1 ROM behavior: Lakitu drops Spiny Eggs straight vertically (vx = 0)!
+            engine.enemies.push(new Spiny(this.x, this.y + 4, 0, false));
           }
-          this.throwTimer = 140 + Math.floor(Math.random() * 55);
+          this.throwTimer = 125 + Math.floor(Math.random() * 55);
         }
       } else {
         this.throwTimer--;
-        if (this.throwTimer <= 0 && Math.abs(this.x - engine.player.x) < 150) {
-          this.duckTimer = 18;
+        if (this.throwTimer <= 0 && Math.abs(relX) < 135) {
+          this.duckTimer = 22;
         }
       }
     }
@@ -695,12 +703,18 @@
         engine.spawnBowserFire(this.x - 10, this.y + 8, this.facing);
       }
 
-      // Worlds 6-8: Bowser also throws Hammers like the original NES!
+      // Worlds 6-8: Bowser also throws Hammers in authentic 1985 NES short bursts with clear pauses!
       if (this.worldNum >= 6) {
         this.hammerTimer--;
         if (this.hammerTimer <= 0) {
-          this.hammerTimer = Math.max(30, 75 - this.worldNum * 5);
           engine.spawnHammer(this.x + 8, this.y, this.facing);
+          this.hammerBurst = (this.hammerBurst === undefined ? (this.worldNum >= 8 ? 4 : 3) : this.hammerBurst) - 1;
+          if (this.hammerBurst > 0) {
+            this.hammerTimer = this.worldNum >= 8 ? 11 : 14;
+          } else {
+            this.hammerBurst = this.worldNum >= 8 ? 4 : 3;
+            this.hammerTimer = Math.max(60, 105 - this.worldNum * 5);
+          }
         }
       }
     }

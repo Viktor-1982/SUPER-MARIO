@@ -473,6 +473,39 @@
     ctx.restore();
   }
 
+  function drawSnowTree(ctx, x, groundY, tall, isNight) {
+    // Authentic 1985 NES Snowy Pine Tree (Worlds 3-1, 3-2, 5-1, 5-2, 6-1, 7-1): brown trunk + snow-white foliage!
+    const px = Math.round(x);
+    const by = Math.round(groundY);
+    const leafLight = isNight ? '#bcbcbc' : '#fcfcfc';
+    const leafMid = isNight ? '#747474' : '#bcbcbc';
+    const trunkCol = '#c84c0c';
+    const trunkDark = '#000000';
+    // Trunk
+    ctx.fillStyle = trunkDark;
+    ctx.fillRect(px + 5, by - 10, 6, 10);
+    ctx.fillStyle = trunkCol;
+    ctx.fillRect(px + 6, by - 10, 4, 10);
+    // Lower foliage tier
+    const tiers = tall ? 2 : 1;
+    for (let t = 0; t < tiers; t++) {
+      const ty = by - 10 - t * 14;
+      ctx.fillStyle = '#000000';
+      ctx.fillRect(px + 1, ty - 14, 14, 15);
+      ctx.fillRect(px + 3, ty - 17, 10, 4);
+      ctx.fillStyle = leafMid;
+      ctx.fillRect(px + 2, ty - 13, 12, 13);
+      ctx.fillStyle = leafLight;
+      ctx.fillRect(px + 2, ty - 13, 11, 10);
+      ctx.fillRect(px + 4, ty - 16, 8, 4);
+      // Classic NES dotted snow-pine texture
+      ctx.fillStyle = leafMid;
+      ctx.fillRect(px + 4, ty - 9, 2, 2);
+      ctx.fillRect(px + 10, ty - 7, 2, 2);
+      ctx.fillRect(px + 6, ty - 5, 2, 2);
+    }
+  }
+
   function drawWideBush(ctx, x, y, midCount, pal) {
     const px = Math.round(x);
     const py = Math.round(y);
@@ -1436,6 +1469,30 @@
     },
 
     drawLakitu(ctx, enemy) {
+      const ducking = enemy.duckTimer > 0 && !enemy.flipped && !enemy.dead;
+      const px = Math.round(enemy.x);
+      const py = Math.round(enemy.y);
+      if (ducking) {
+        // Authentic 1985 NES telegraph: Lakitu ducks completely inside his puffy white cloud right before tossing a Spiny Egg!
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(px + 1, py + 11, 14, 12);
+        ctx.fillRect(px, py + 13, 16, 8);
+        ctx.fillStyle = '#fcfcfc';
+        ctx.fillRect(px + 2, py + 12, 12, 10);
+        ctx.fillRect(px + 1, py + 14, 14, 6);
+        // Cute NES cloud smile & eyes
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(px + 5, py + 14, 1, 3);
+        ctx.fillRect(px + 10, py + 14, 1, 3);
+        // Red Spiny Egg peeking out right before release
+        if (enemy.duckTimer <= 8) {
+          ctx.fillStyle = '#e52521';
+          ctx.fillRect(px + 5, py + 7, 6, 5);
+          ctx.fillStyle = '#fcfcfc';
+          ctx.fillRect(px + 6, py + 8, 2, 2);
+        }
+        return;
+      }
       const img = getImg('lakitu');
       if (img) {
         drawImgAnchored(ctx, img, enemy.x, enemy.y, enemy.w || 16, enemy.h || 24, enemy.facing > 0);
@@ -2139,21 +2196,31 @@
           drawWideCloud(ctx, ox + 436, 52, 2, cloudPal);
           drawWideCloud(ctx, ox + 584, 38, 1, cloudPal);
 
-          if (level.theme !== 'athletic' && !fortressApproach) {
-            // Large Hill (35px) & Small Hill (19px)
+          const isTreeFenceScenery = (level.theme === 'snow' || (level.theme === 'night' && level.id !== '6-3'));
+          if (isTreeFenceScenery && !fortressApproach) {
+            // Authentic 1985 NES Trees & White Fences scenery (Worlds 3-1, 3-2, 5-1, 5-2, 6-1, 7-1 — NO hills/bushes!)
+            const isNight = level.theme === 'night';
+            drawSnowTree(ctx, ox + 176, 208, false, isNight);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 208, 192);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 224, 192);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 240, 192);
+            drawSnowTree(ctx, ox + 256, 208, true, isNight);
+            drawSnowTree(ctx, ox + 368, 208, true, isNight);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 400, 192);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 416, 192);
+            drawSnowTree(ctx, ox + 592, 208, false, isNight);
+            drawSnowTree(ctx, ox + 640, 208, true, isNight);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 672, 192);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 688, 192);
+            drawBitmap(ctx, FENCE_TILE, fencePal, ox + 704, 192);
+          } else if (level.theme !== 'athletic' && level.id !== '6-3' && !fortressApproach) {
+            // Classic Overworld Large Hill (35px), Small Hill (19px) & Bushes (1-1, 2-1, 4-1, 6-2, 8-1, 8-2)
             drawNesHill(ctx, ox + 44, 208, 35, t);
             drawNesHill(ctx, ox + 292, 208, 19, t);
 
-            // Triple Bush, Single Bush, Double Bush
             drawWideBush(ctx, ox + 176, 192, 2, bushPal);
             drawWideBush(ctx, ox + 372, 192, 0, bushPal);
             drawWideBush(ctx, ox + 656, 192, 1, bushPal);
-
-            // Subtle classic wooden fence in Snow/Overworld
-            if (level.theme === 'snow') {
-              drawBitmap(ctx, FENCE_TILE, fencePal, ox + 480, 192);
-              drawBitmap(ctx, FENCE_TILE, fencePal, ox + 496, 192);
-            }
           }
         }
       } else if (level.theme === 'castle') {

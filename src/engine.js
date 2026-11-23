@@ -999,8 +999,8 @@
             if (global.MarioEntities.aabb(fb, e)) {
               fb.remove = true;
               this.spawnPuff(fb.x, fb.y);
-              if (e.type === 'buzzy') {
-                // Authentic NES: Buzzy Beetle is immune to Fireballs!
+              if (e.type === 'buzzy' || e.type === 'bullet') {
+                // Authentic NES: Buzzy Beetles and Bullet Bills are immune to Fireballs!
                 global.MarioAudio.playSfx('bump');
               } else if (e.type === 'bowser') {
                 e.hp--;
@@ -1048,6 +1048,16 @@
         }
         if (!e.active) continue;
         e.update(this);
+
+        // Authentic 1985 NES: ground/hopping enemies NEVER cross into the flagpole & castle finish yard!
+        if (this.level.flagpoleCol && !e.dead && !e.flipped &&
+            e.type !== 'piranha' && e.type !== 'bullet' && e.type !== 'lakitu' && e.type !== 'bowser') {
+          const flagBarrierX = (this.level.flagpoleCol - 1) * TILE;
+          if (e.x + e.w > flagBarrierX) {
+            e.x = flagBarrierX - e.w;
+            if (e.vx > 0) e.vx = -e.vx;
+          }
+        }
 
         // Spinning shell knocks out enemies
         if ((e.type === 'koopa' || e.type === 'buzzy') && e.state === 'spinning' && !e.dead) {
@@ -1683,6 +1693,10 @@
       const p = this.player;
       this.state = 'flagpole';
       this.savedMainState = null;
+      // Authentic 1985 NES KillAllEnemies: touching the flagpole clears all remaining enemies & projectiles!
+      this.enemies = [];
+      this.fireballs = [];
+      this.hammers = [];
       p.vx = 0; p.vy = 0;
       p.starTimer = 0; p.crouching = false; p.skidding = false; p.invulnTimer = 0;
       p.x = this.level.flagpoleCol * TILE - 4;
@@ -1938,14 +1952,12 @@
       S.drawCastle(ctx, 0, 13 * TILE - 80);
       // Mario walking into the pipe (drawn BEHIND pipe when sliding inside!)
       if (pi.phase === 'enter') S.drawMario(ctx, this.player, this.frame, false);
-      // Iconic L-shaped green side-entry pipe at cols 10..13
+      // Iconic L-shaped green side-entry pipe at cols 10..13 (vertical shaft rises to top of screen like original NES!)
       S.drawTile(ctx, '<', 10 * TILE, 11 * TILE, pi.theme, this.frame, 0);
       S.drawTile(ctx, ',', 10 * TILE, 12 * TILE, pi.theme, this.frame, 0);
       S.drawTile(ctx, '-', 11 * TILE, 11 * TILE, pi.theme, this.frame, 0);
       S.drawTile(ctx, '_', 11 * TILE, 12 * TILE, pi.theme, this.frame, 0);
-      S.drawTile(ctx, '[', 12 * TILE, 9 * TILE, pi.theme, this.frame, 0);
-      S.drawTile(ctx, ']', 13 * TILE, 9 * TILE, pi.theme, this.frame, 0);
-      for (let r = 10; r <= 12; r++) {
+      for (let r = 0; r <= 12; r++) {
         S.drawTile(ctx, '{', 12 * TILE, r * TILE, pi.theme, this.frame, 0);
         S.drawTile(ctx, '}', 13 * TILE, r * TILE, pi.theme, this.frame, 0);
       }
@@ -1994,6 +2006,11 @@
         : 0;
       ctx.translate(roomOffsetX - Math.floor(this.cameraX), 0);
 
+      // Authentic 1985 NES starting small castle on the left of outdoor stages (e.g. 2-1, 3-1, 4-1, 5-1, 5-2, 5-3...)
+      if (this.level.flagpoleCol && !this.level.isBonus && !this.level.isCloud &&
+          !this.level.id.endsWith('-exit') && this.level.id !== '1-1') {
+        S.drawCastle(ctx, -16, 13 * TILE - 80);
+      }
       if (this.level.castleCol) {
         const cx = this.level.castleCol * TILE;
         const cy = 13 * TILE - 80;
