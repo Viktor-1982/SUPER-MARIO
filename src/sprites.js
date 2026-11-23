@@ -2196,7 +2196,7 @@
           drawWideCloud(ctx, ox + 436, 52, 2, cloudPal);
           drawWideCloud(ctx, ox + 584, 38, 1, cloudPal);
 
-          const isTreeFenceScenery = (level.theme === 'snow' || (level.theme === 'night' && level.id !== '6-3'));
+          const isTreeFenceScenery = (level.theme === 'snow' || (level.theme === 'night' && level.id !== '3-3' && level.id !== '6-3'));
           if (isTreeFenceScenery && !fortressApproach) {
             // Authentic 1985 NES Trees & White Fences scenery (Worlds 3-1, 3-2, 5-1, 5-2, 6-1, 7-1 — NO hills/bushes!)
             const isNight = level.theme === 'night';
@@ -2213,7 +2213,7 @@
             drawBitmap(ctx, FENCE_TILE, fencePal, ox + 672, 192);
             drawBitmap(ctx, FENCE_TILE, fencePal, ox + 688, 192);
             drawBitmap(ctx, FENCE_TILE, fencePal, ox + 704, 192);
-          } else if (level.theme !== 'athletic' && level.id !== '6-3' && !fortressApproach) {
+          } else if (level.theme !== 'athletic' && level.id !== '3-3' && level.id !== '6-3' && !fortressApproach) {
             // Classic Overworld Large Hill (35px), Small Hill (19px) & Bushes (1-1, 2-1, 4-1, 6-2, 8-1, 8-2)
             drawNesHill(ctx, ox + 44, 208, 35, t);
             drawNesHill(ctx, ox + 292, 208, 19, t);
